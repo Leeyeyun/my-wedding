@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>모바일 청첩장</title>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="결혼식에 초대합니다">
+  <meta property="og:description" content="소중한 분들을 초대합니다">
+  <meta property="og:image" content="images/og/1.jpg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Aboreto&family=Grape+Nuts&family=Gravitas+One&family=Noto+Sans+KR:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Pretendard CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- ====== Hero ====== -->
+  <section class="hero hero-intro">
+    <div class="hero-stage">
+      <div class="hero-media">
+        <img class="hero-image" src="" alt="Wedding photo" loading="eager">
+      </div>
+      <div class="hero-overlay">
+        <div class="hero-content">
+          <p class="hero-kicker">We're getting married!</p>
+          <div class="hero-date-wrap">
+            <div class="hero-date-stack" aria-label=""></div>
+          </div>
+          <div class="hero-bottom">
+            <div class="hero-meta">
+              <div class="hero-date"></div>
+              <div class="hero-venue"></div>
+            </div>
+            <div class="hero-scroll" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="content-shell">
+  <!-- ====== Invitation ====== -->
+  <section class="section invitation fade-in">
+    <div class="section-label">Invitation</div>
+    <div class="section-title">소중한 분들을 초대합니다</div>
+    <p class="invitation-message"></p>
+    <div class="section-divider"></div>
+    <div class="invitation-parents"></div>
+  </section>
+
+  <!-- ====== Poster ====== -->
+  <section class="section poster-section fade-in">
+    <div class="poster-frame">
+      <img class="poster-image" src="" alt="Wedding poster" loading="lazy">
+      <div class="poster-placeholder">
+        <span class="poster-placeholder-label">Add Poster Image</span>
+        <span class="poster-placeholder-path">images/poster/1.jpg</span>
+      </div>
+      <div class="poster-overlay">
+        <div class="poster-top">
+          <span class="poster-name poster-name-groom"></span>
+          <span class="poster-top-line" aria-hidden="true"></span>
+          <span class="poster-name poster-name-bride"></span>
+        </div>
+        <div class="poster-date-block" aria-label="">
+          <div class="poster-date-month-day"></div>
+          <div class="poster-date-year"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== Calendar & Countdown ====== -->
+  <section class="section calendar-countdown fade-in">
+    <div class="calendar-countdown__header">
+      <div class="calendar-countdown__date-text" id="calendar-section-date"></div>
+      <div class="calendar-countdown__time-text" id="calendar-section-time"></div>
+    </div>
+
+    <div class="calendar-countdown__divider"></div>
+
+    <div class="calendar-countdown__calendar">
+      <div class="calendar-countdown__weekdays">
+        <span class="is-sunday">일</span>
+        <span>월</span>
+        <span>화</span>
+        <span>수</span>
+        <span>목</span>
+        <span>금</span>
+        <span class="is-saturday">토</span>
+      </div>
+      <div class="calendar-countdown__days" id="calendar-section-days"></div>
+    </div>
+
+    <div class="calendar-countdown__divider"></div>
+
+    <div class="calendar-countdown__timer">
+      <div class="calendar-countdown__timer-item">
+        <span class="calendar-countdown__timer-label">DAYS</span>
+        <span class="calendar-countdown__timer-value" id="calendar-count-days">0</span>
+      </div>
+      <div class="calendar-countdown__timer-item">
+        <span class="calendar-countdown__timer-label">HOUR</span>
+        <span class="calendar-countdown__timer-value" id="calendar-count-hours">00</span>
+      </div>
+      <div class="calendar-countdown__timer-item">
+        <span class="calendar-countdown__timer-label">MIN</span>
+        <span class="calendar-countdown__timer-value" id="calendar-count-minutes">00</span>
+      </div>
+      <div class="calendar-countdown__timer-item">
+        <span class="calendar-countdown__timer-label">SEC</span>
+        <span class="calendar-countdown__timer-value" id="calendar-count-seconds">00</span>
+      </div>
+    </div>
+
+    <p class="calendar-countdown__message" id="calendar-countdown-message"></p>
+  </section>
+
+  <!-- ====== Gallery ====== -->
+  <section class="section gallery fade-in">
+    <div class="gallery-header">
+      <div class="section-label">Gallery</div>
+      <div class="section-title">우리의 순간들</div>
+    </div>
+    <div class="gallery-showcase">
+      <div class="gallery-main">
+        <button class="gallery-nav gallery-nav-prev" type="button" aria-label="이전 사진">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div class="gallery-main-viewport">
+          <div class="gallery-main-track"></div>
+        </div>
+        <button class="gallery-nav gallery-nav-next" type="button" aria-label="다음 사진">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+        <div class="gallery-main-counter"></div>
+      </div>
+      <div class="gallery-thumbs"></div>
+    </div>
+  </section>
+
+  <!-- ====== Location ====== -->
+  <section class="section location fade-in">
+    <div class="location-header">
+      <div class="section-label">Location</div>
+      <div class="section-title">오시는 길</div>
+    </div>
+    <div class="location-info">
+      <div class="location-venue-name"></div>
+      <div class="location-venue-hall"></div>
+      <div class="location-address"></div>
+      <div class="location-tel"></div>
+    </div>
+    <div class="location-map-card">
+      <div id="map" class="location-map-canvas" aria-label="네이버 지도"></div>
+      <img class="location-map-fallback-image" src="" alt="약도" loading="lazy">
+      <div class="location-map-empty">네이버 지도 Client ID와 좌표를 입력하면 인터랙티브 지도가 표시됩니다.</div>
+    </div>
+    <div class="location-nav">
+      <div class="location-nav-title">내비게이션</div>
+      <p class="location-nav-description">원하시는 앱을 선택하시면 길안내가 시작됩니다.</p>
+      <div class="location-actions">
+        <a href="#" id="link-naver-map" target="_blank" rel="noopener">
+          <img src="images/location/naver_logo.png" alt="" aria-hidden="true">
+          <span>네이버지도</span>
+        </a>
+        <a href="#" id="link-tmap" target="_blank" rel="noopener">
+          <img src="images/location/tmap_logo.svg" alt="" aria-hidden="true">
+          <span>티맵</span>
+        </a>
+        <a href="#" id="link-kakao-navi" target="_blank" rel="noopener">
+          <img src="images/location/kakaomap_logo.png" alt="" aria-hidden="true">
+          <span>카카오내비</span>
+        </a>
+      </div>
+      <button type="button" id="btn-copy-address" class="location-copy-button">주소 복사</button>
+    </div>
+    <div class="location-guide">
+      <div class="location-guide-section">
+        <div class="location-guide-title">지하철</div>
+        <div class="location-guide-content" id="location-guide-subway"></div>
+      </div>
+      <div class="location-guide-section">
+        <div class="location-guide-title">버스</div>
+        <div class="location-guide-content" id="location-guide-bus"></div>
+      </div>
+      <div class="location-guide-section">
+        <div class="location-guide-title">주차 안내</div>
+        <div class="location-guide-content" id="location-guide-parking"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== RSVP ====== -->
+  <section class="section attendance fade-in">
+    <div class="attendance-card">
+      <div class="attendance-header">
+        <div class="section-title attendance-title"></div>
+      </div>
+      <div class="attendance-icon" aria-hidden="true">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <circle cx="14" cy="14" r="5" fill="currentColor" opacity="0.5"/>
+          <circle cx="25.5" cy="13" r="5.5" fill="currentColor" opacity="0.85"/>
+          <path d="M6 29.5c0-3.59 2.91-6.5 6.5-6.5h3c3.59 0 6.5 2.91 6.5 6.5V31H6v-1.5Z" fill="currentColor" opacity="0.5"/>
+          <path d="M18 28.5c0-3.59 2.91-6.5 6.5-6.5h3c3.59 0 6.5 2.91 6.5 6.5V31H18v-2.5Z" fill="currentColor" opacity="0.85"/>
+          <path d="m29.5 19.5 2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <p class="attendance-message"></p>
+      <button type="button" id="attendance-link" class="attendance-button">참석 여부 전달</button>
+    </div>
+  </section>
+
+  <!-- ====== Account ====== -->
+  <section class="section account fade-in">
+    <div class="account-header">
+      <div class="section-label">Account</div>
+      <div class="section-title">마음 전하실 곳</div>
+    </div>
+
+    <div class="account-group" id="account-groom">
+      <button class="account-group-toggle" type="button">
+        <span class="toggle-label">신랑측 계좌번호</span>
+        <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <div class="account-list"></div>
+    </div>
+
+    <div class="account-group" id="account-bride">
+      <button class="account-group-toggle" type="button">
+        <span class="toggle-label">신부측 계좌번호</span>
+        <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <div class="account-list"></div>
+    </div>
+  </section>
+
+  <!-- ====== Footer ====== -->
+  <footer class="footer">
+    <div class="footer-text">Wedding Invitation</div>
+  </footer>
+  </div>
+
+</div>
+
+<!-- ====== Photo Modal ====== -->
+<div class="modal-overlay">
+  <button class="modal-close" type="button" aria-label="닫기">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+  <button class="modal-nav modal-prev" type="button" aria-label="이전">
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+  <button class="modal-nav modal-next" type="button" aria-label="다음">
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 6 15 12 9 18"/>
+    </svg>
+  </button>
+  <div class="modal-swipe-area">
+    <img class="modal-image" src="" alt="">
+  </div>
+  <div class="modal-counter"></div>
+</div>
+
+<!-- ====== RSVP Bottom Sheet ====== -->
+<div class="rsvp-sheet-overlay" id="rsvp-sheet-overlay" aria-hidden="true">
+  <section class="rsvp-sheet" role="dialog" aria-modal="true" aria-labelledby="rsvp-sheet-title">
+    <div class="rsvp-sheet-header">
+      <div class="rsvp-sheet-title" id="rsvp-sheet-title">참석 여부 전달</div>
+      <button type="button" class="rsvp-sheet-close" id="rsvp-sheet-close" aria-label="닫기">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form class="rsvp-form" id="rsvp-form">
+      <div class="rsvp-field">
+        <div class="rsvp-label">어느 측 하객이신가요? <span>*</span></div>
+        <div class="rsvp-segmented" data-required-group="side">
+          <label class="rsvp-choice">
+            <input type="radio" name="side" value="신랑" required>
+            <span>신랑</span>
+          </label>
+          <label class="rsvp-choice">
+            <input type="radio" name="side" value="신부" required>
+            <span>신부</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="rsvp-field">
+        <div class="rsvp-label">참석여부 <span>*</span></div>
+        <div class="rsvp-segmented" data-required-group="attendance">
+          <label class="rsvp-choice">
+            <input type="radio" name="attendance" value="참석" required>
+            <span>참석</span>
+          </label>
+          <label class="rsvp-choice">
+            <input type="radio" name="attendance" value="불참석" required>
+            <span>불참석</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="rsvp-field">
+        <div class="rsvp-label">식사여부 <span>*</span></div>
+        <div class="rsvp-segmented rsvp-segmented-three" data-required-group="meal">
+          <label class="rsvp-choice">
+            <input type="radio" name="meal" value="O" required>
+            <span>O</span>
+          </label>
+          <label class="rsvp-choice">
+            <input type="radio" name="meal" value="X" required>
+            <span>X</span>
+          </label>
+          <label class="rsvp-choice">
+            <input type="radio" name="meal" value="미정" required>
+            <span>미정</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="rsvp-field">
+        <label class="rsvp-label" for="rsvp-name">성함 <span>*</span></label>
+        <input type="text" id="rsvp-name" name="name" class="rsvp-input" required>
+      </div>
+
+      <div class="rsvp-field">
+        <label class="rsvp-label" for="rsvp-companion">동행인 성함</label>
+        <input type="text" id="rsvp-companion" name="companion" class="rsvp-input">
+      </div>
+
+      <div class="rsvp-field">
+        <label class="rsvp-label" for="rsvp-note">전달사항</label>
+        <textarea id="rsvp-note" name="note" class="rsvp-textarea"></textarea>
+      </div>
+
+      <div class="rsvp-consent-row">
+        <label class="rsvp-consent">
+          <input type="checkbox" id="rsvp-consent" name="consent" required>
+          <span>개인정보 수집 및 활용 동의</span>
+        </label>
+        <a href="#" id="rsvp-privacy-link" class="rsvp-privacy-link" target="_blank" rel="noopener">[자세히보기]</a>
+      </div>
+
+      <button type="submit" class="rsvp-submit" id="rsvp-submit">전달</button>
+    </form>
+  </section>
+</div>
+
+<!-- Scripts -->
+<script src="config.js"></script>
+<script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=d7zu5owtdw"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.0/kakao.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
