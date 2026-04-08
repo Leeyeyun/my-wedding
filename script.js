@@ -740,7 +740,7 @@
 
     if (!mapCard || !mapEl) return;
 
-    if (!window.naver?.maps || !hasCoordinates) {
+    if (window.__naverMapAuthFailed || !window.naver?.maps || !hasCoordinates) {
       mapCard.classList.add('is-fallback');
       return;
     }
