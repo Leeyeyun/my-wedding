@@ -18,6 +18,7 @@
 
   <!-- Pretendard CDN -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -84,8 +85,7 @@
   <!-- ====== Calendar & Countdown ====== -->
   <section class="section calendar-countdown fade-in">
     <div class="calendar-countdown__header">
-      <div class="calendar-countdown__date-text" id="calendar-section-date"></div>
-      <div class="calendar-countdown__time-text" id="calendar-section-time"></div>
+      <div class="calendar-countdown__month-text" id="calendar-section-month"></div>
     </div>
 
     <div class="calendar-countdown__divider"></div>
@@ -105,25 +105,7 @@
 
     <div class="calendar-countdown__divider"></div>
 
-    <div class="calendar-countdown__timer">
-      <div class="calendar-countdown__timer-item">
-        <span class="calendar-countdown__timer-label">DAYS</span>
-        <span class="calendar-countdown__timer-value" id="calendar-count-days">0</span>
-      </div>
-      <div class="calendar-countdown__timer-item">
-        <span class="calendar-countdown__timer-label">HOUR</span>
-        <span class="calendar-countdown__timer-value" id="calendar-count-hours">00</span>
-      </div>
-      <div class="calendar-countdown__timer-item">
-        <span class="calendar-countdown__timer-label">MIN</span>
-        <span class="calendar-countdown__timer-value" id="calendar-count-minutes">00</span>
-      </div>
-      <div class="calendar-countdown__timer-item">
-        <span class="calendar-countdown__timer-label">SEC</span>
-        <span class="calendar-countdown__timer-value" id="calendar-count-seconds">00</span>
-      </div>
-    </div>
-
+    <p class="calendar-countdown__summary" id="calendar-section-summary"></p>
     <p class="calendar-countdown__message" id="calendar-countdown-message"></p>
   </section>
 
@@ -136,15 +118,15 @@
     <div class="gallery-showcase">
       <div class="gallery-main">
         <button class="gallery-nav gallery-nav-prev" type="button" aria-label="이전 사진">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="gallery-main-viewport">
-          <div class="gallery-main-track"></div>
+        <div class="gallery-main-swiper swiper">
+          <div class="gallery-main-track swiper-wrapper"></div>
         </div>
         <button class="gallery-nav gallery-nav-next" type="button" aria-label="다음 사진">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"/>
           </svg>
         </button>
@@ -210,6 +192,7 @@
   <section class="section attendance fade-in">
     <div class="attendance-card">
       <div class="attendance-header">
+        <div class="section-label">RSVP</div>
         <div class="section-title attendance-title"></div>
       </div>
       <div class="attendance-icon" aria-hidden="true">
@@ -223,6 +206,27 @@
       </div>
       <p class="attendance-message"></p>
       <button type="button" id="attendance-link" class="attendance-button">참석 여부 전달</button>
+    </div>
+  </section>
+
+  <!-- ====== Snap ====== -->
+  <section class="section snap-section fade-in">
+    <div class="snap-polaroid" aria-label="스냅 사진 업로드 안내">
+      <figure class="snap-photo-frame">
+        <img class="snap-polaroid-image" src="" alt="스냅 미리보기" loading="lazy">
+      </figure>
+
+      <div class="snap-copy">
+        <div class="snap-heading-group">
+          <div class="snap-title"></div>
+          <div class="snap-heading">스냅</div>
+        </div>
+        <div class="snap-body">
+          <p class="snap-description"></p>
+          <a href="#" id="snap-upload-link" class="snap-upload-button" target="_blank" rel="noopener">사진 업로드</a>
+          <p class="snap-availability"></p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -271,17 +275,17 @@
     </svg>
   </button>
   <button class="modal-nav modal-prev" type="button" aria-label="이전">
-    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </button>
   <button class="modal-nav modal-next" type="button" aria-label="다음">
-    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="9 6 15 12 9 18"/>
     </svg>
   </button>
-  <div class="modal-swipe-area">
-    <img class="modal-image" src="" alt="">
+  <div class="modal-swipe-area swiper">
+    <div class="modal-track swiper-wrapper"></div>
   </div>
   <div class="modal-counter"></div>
 </div>
@@ -383,6 +387,7 @@
 </script>
 <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=d7zu5owtdw"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.0/kakao.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

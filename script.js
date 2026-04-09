@@ -149,6 +149,7 @@
     buildCalendarCountdown(c, dateInfo);
     buildLocation(c);
     buildAttendance(c);
+    buildSnap(c);
     buildAccount(c);
     initRsvpModal(c);
     initScrollAnimations();
@@ -270,17 +271,17 @@
     await wait(1000);
 
     hero.classList.remove('hero-intro');
-    await wait(2000);
-
-    hero.classList.add('hero-dates-revealed');
-    await wait(1500);
-
-    hero.classList.add('hero-info-revealed');
     document.documentElement.classList.remove('intro-active');
     document.body.classList.remove('intro-active');
     resetScrollAnimations();
     initScrollAnimations();
     initPosterAnimation();
+    await wait(800);
+
+    hero.classList.add('hero-dates-revealed');
+    await wait(800);
+
+    hero.classList.add('hero-info-revealed');
   }
 
   // ── Invitation ──
@@ -354,14 +355,14 @@
 
   // ── Calendar & Countdown ──
   function buildCalendarCountdown(c, dateInfo) {
-    const dateText = $('#calendar-section-date');
-    if (dateText) {
-      dateText.textContent = `${dateInfo.year}.${String(dateInfo.month).padStart(2, '0')}.${String(dateInfo.day).padStart(2, '0')}`;
+    const monthText = $('#calendar-section-month');
+    if (monthText) {
+      monthText.textContent = `${dateInfo.month}월`;
     }
 
-    const timeText = $('#calendar-section-time');
-    if (timeText) {
-      timeText.textContent = `${dateInfo.dayName}요일 ${formatCeremonyTime(c.wedding.time)}`;
+    const summaryText = $('#calendar-section-summary');
+    if (summaryText) {
+      summaryText.textContent = `${dateInfo.year}년 ${dateInfo.month}월 ${dateInfo.day}일 ${dateInfo.dayName}요일 ${formatCeremonyTime(c.wedding.time)}`;
     }
 
     buildCalendarGrid(c, dateInfo);
@@ -404,35 +405,18 @@
     function update() {
       const now = new Date();
       const diff = target - now;
-
-      const daysEl = $('#calendar-count-days');
-      const hoursEl = $('#calendar-count-hours');
-      const minutesEl = $('#calendar-count-minutes');
-      const secondsEl = $('#calendar-count-seconds');
       const messageEl = $('#calendar-countdown-message');
 
       if (diff <= 0) {
-        if (daysEl) daysEl.textContent = '0';
-        if (hoursEl) hoursEl.textContent = '00';
-        if (minutesEl) minutesEl.textContent = '00';
-        if (secondsEl) secondsEl.textContent = '00';
         if (messageEl) {
-          messageEl.innerHTML = `${groomName}, ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight calendar-countdown__message-strong">오늘</span>입니다.`;
+          messageEl.innerHTML = `${groomName} <span class="calendar-countdown__message-heart">♥</span> ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight calendar-countdown__message-strong">오늘</span>입니다.`;
         }
         return;
       }
 
       const days = Math.floor(diff / dayMs);
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-
-      if (daysEl) daysEl.textContent = String(days);
-      if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
-      if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
-      if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
       if (messageEl) {
-        messageEl.innerHTML = `${groomName}, ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight"><strong class="calendar-countdown__message-strong">${days}일</strong></span> 남았습니다.`;
+        messageEl.innerHTML = `${groomName} <span class="calendar-countdown__message-heart">♥</span> ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight"><strong class="calendar-countdown__message-strong">${days}일</strong></span> 남았습니다.`;
       }
     }
 
@@ -443,6 +427,8 @@
   // ── Gallery (rendered after auto-detection) ──
   let galleryAllImages = [];
   let currentGalleryIndex = 0;
+  let gallerySwiper = null;
+  let modalSwiper = null;
 
   function buildGallery(images) {
     const section = $('.gallery');
@@ -451,8 +437,8 @@
     const counter = $('.gallery-main-counter');
     const prevBtn = $('.gallery-nav-prev');
     const nextBtn = $('.gallery-nav-next');
-    const viewport = $('.gallery-main-viewport');
-    if (!section || !track || !thumbs || !counter || !prevBtn || !nextBtn || !viewport) return;
+    const swiperEl = $('.gallery-main-swiper');
+    if (!section || !track || !thumbs || !counter || !prevBtn || !nextBtn || !swiperEl) return;
 
     galleryAllImages = images;
     currentGalleryIndex = 0;
@@ -463,9 +449,11 @@
     }
 
     track.innerHTML = images.map((src, i) =>
-      `<button class="gallery-main-slide" type="button" data-index="${i}" aria-label="갤러리 사진 ${i + 1}">
-        <img src="${src}" alt="Gallery photo ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}">
-      </button>`
+      `<div class="swiper-slide">
+        <button class="gallery-main-slide" type="button" data-index="${i}" aria-label="갤러리 사진 ${i + 1}">
+          <img src="${src}" alt="Gallery photo ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}">
+        </button>
+      </div>`
     ).join('');
 
     const previewCount = Math.min(images.length, 15);
@@ -479,8 +467,8 @@
     prevBtn.style.display = hasMultipleImages ? '' : 'none';
     nextBtn.style.display = hasMultipleImages ? '' : 'none';
 
-    function updateGallery() {
-      track.style.transform = `translateX(-${currentGalleryIndex * 100}%)`;
+    function updateGallery(index = currentGalleryIndex) {
+      currentGalleryIndex = index;
       counter.textContent = `${currentGalleryIndex + 1} / ${images.length}`;
 
       $$('.gallery-thumb', thumbs).forEach((thumb, i) => {
@@ -488,15 +476,30 @@
       });
     }
 
-    function moveGallery(dir) {
-      currentGalleryIndex = (currentGalleryIndex + dir + images.length) % images.length;
-      updateGallery();
+    if (gallerySwiper) {
+      gallerySwiper.destroy(true, true);
     }
 
-    prevBtn.onclick = () => moveGallery(-1);
-    nextBtn.onclick = () => moveGallery(1);
+    gallerySwiper = new Swiper(swiperEl, {
+      slidesPerView: 1,
+      speed: 800,
+      allowTouchMove: hasMultipleImages,
+      rewind: hasMultipleImages,
+      navigation: {
+        prevEl: prevBtn,
+        nextEl: nextBtn
+      },
+      on: {
+        init(swiper) {
+          updateGallery(swiper.realIndex);
+        },
+        slideChange(swiper) {
+          updateGallery(swiper.realIndex);
+        }
+      }
+    });
 
-    $$('.gallery-main-slide', track).forEach(slide => {
+    $$('.gallery-main-slide', swiperEl).forEach(slide => {
       slide.addEventListener('click', () => {
         openModal(images, Number(slide.dataset.index));
       });
@@ -504,21 +507,10 @@
 
     $$('.gallery-thumb', thumbs).forEach(thumb => {
       thumb.addEventListener('click', () => {
-        currentGalleryIndex = Number(thumb.dataset.index);
-        updateGallery();
+        const nextIndex = Number(thumb.dataset.index);
+        gallerySwiper?.slideTo(nextIndex);
       });
     });
-
-    let touchStartX = 0;
-    viewport.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    viewport.addEventListener('touchend', (e) => {
-      const diff = touchStartX - e.changedTouches[0].screenX;
-      if (Math.abs(diff) < 40) return;
-      moveGallery(diff > 0 ? 1 : -1);
-    }, { passive: true });
 
     updateGallery();
   }
@@ -526,80 +518,17 @@
   // ── Photo Modal ──
   let currentModalImages = [];
   let currentModalIndex = 0;
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchEndX = 0;
-  let touchEndY = 0;
-  let didSwipeModal = false;
-  let isModalTouchTracking = false;
 
   function initModal() {
     const overlay = $('.modal-overlay');
     if (!overlay) return;
 
     const closeBtn = $('.modal-close');
-    const prevBtn = $('.modal-prev');
-    const nextBtn = $('.modal-next');
-    const swipeArea = $('.modal-swipe-area');
 
     closeBtn?.addEventListener('click', closeModal);
-    prevBtn?.addEventListener('click', () => navigateModal(-1));
-    nextBtn?.addEventListener('click', () => navigateModal(1));
 
     overlay.addEventListener('click', (e) => {
-      if (didSwipeModal) {
-        didSwipeModal = false;
-        return;
-      }
-      if (e.target === overlay || e.target === swipeArea) closeModal();
-    });
-
-    function onModalTouchStart(e) {
-      if (!overlay.classList.contains('active')) return;
-      const touch = e.changedTouches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      touchEndX = touch.clientX;
-      touchEndY = touch.clientY;
-      didSwipeModal = false;
-      isModalTouchTracking = true;
-    }
-
-    function onModalTouchMove(e) {
-      if (!isModalTouchTracking || !overlay.classList.contains('active')) return;
-      const touch = e.changedTouches[0];
-      touchEndX = touch.clientX;
-      touchEndY = touch.clientY;
-
-      const diffX = touchStartX - touchEndX;
-      const diffY = touchStartY - touchEndY;
-
-      if (Math.abs(diffX) > Math.abs(diffY)) {
-        e.preventDefault();
-      }
-    }
-
-    function onModalTouchEnd(e) {
-      if (!isModalTouchTracking || !overlay.classList.contains('active')) return;
-      const touch = e.changedTouches[0];
-      touchEndX = touch.clientX;
-      touchEndY = touch.clientY;
-      isModalTouchTracking = false;
-
-      const diffX = touchStartX - touchEndX;
-      const diffY = touchStartY - touchEndY;
-
-      if (Math.abs(diffX) > 32 && Math.abs(diffX) > Math.abs(diffY) * 1.1) {
-        didSwipeModal = true;
-        navigateModal(diffX > 0 ? 1 : -1);
-      }
-    }
-
-    [overlay, swipeArea, $('.modal-image')].forEach(target => {
-      if (!target) return;
-      target.addEventListener('touchstart', onModalTouchStart, { passive: true });
-      target.addEventListener('touchmove', onModalTouchMove, { passive: false });
-      target.addEventListener('touchend', onModalTouchEnd, { passive: true });
+      if (e.target === overlay) closeModal();
     });
 
     // Keyboard
@@ -616,9 +545,51 @@
     currentModalIndex = index;
 
     const overlay = $('.modal-overlay');
-    if (!overlay) return;
+    const swiperEl = $('.modal-swipe-area');
+    const track = $('.modal-track');
+    const prevBtn = $('.modal-prev');
+    const nextBtn = $('.modal-next');
+    if (!overlay || !swiperEl || !track || !prevBtn || !nextBtn) return;
 
-    updateModalImage();
+    track.innerHTML = images.map((src, i) =>
+      `<div class="swiper-slide modal-slide">
+        <img class="modal-image" src="${src}" alt="Photo ${i + 1}" loading="${i === index ? 'eager' : 'lazy'}">
+      </div>`
+    ).join('');
+
+    if (modalSwiper) {
+      modalSwiper.destroy(true, true);
+    }
+
+    modalSwiper = new Swiper(swiperEl, {
+      initialSlide: index,
+      slidesPerView: 1,
+      speed: 650,
+      rewind: images.length > 1,
+      allowTouchMove: images.length > 1,
+      navigation: {
+        prevEl: prevBtn,
+        nextEl: nextBtn
+      },
+      pagination: {
+        el: '.modal-counter',
+        clickable: true,
+        bulletClass: 'modal-dot',
+        bulletActiveClass: 'is-active'
+      },
+      on: {
+        init(swiper) {
+          currentModalIndex = swiper.realIndex;
+        },
+        slideChange(swiper) {
+          currentModalIndex = swiper.realIndex;
+        }
+      }
+    });
+
+    prevBtn.style.display = images.length > 1 ? '' : 'none';
+    nextBtn.style.display = images.length > 1 ? '' : 'none';
+
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
   }
@@ -631,22 +602,9 @@
   }
 
   function navigateModal(dir) {
-    currentModalIndex += dir;
-    if (currentModalIndex < 0) currentModalIndex = currentModalImages.length - 1;
-    if (currentModalIndex >= currentModalImages.length) currentModalIndex = 0;
-    updateModalImage();
-  }
-
-  function updateModalImage() {
-    const img = $('.modal-image');
-    const counter = $('.modal-counter');
-    if (img) {
-      img.src = currentModalImages[currentModalIndex];
-      img.alt = `Photo ${currentModalIndex + 1}`;
-    }
-    if (counter) {
-      counter.textContent = `${currentModalIndex + 1} / ${currentModalImages.length}`;
-    }
+    if (!modalSwiper) return;
+    if (dir > 0) modalSwiper.slideNext();
+    else modalSwiper.slidePrev();
   }
 
   // ── Location ──
@@ -682,10 +640,19 @@
 
     renderLocationGuide(subwayGuide, c.wedding.transport?.subway);
     renderLocationGuide(busGuide, c.wedding.transport?.bus);
-    renderLocationGuide(parkingGuide, [
-      c.information?.primary,
-      c.information?.secondary
-    ].filter(Boolean));
+    renderLocationGuide(parkingGuide, [{
+      html: [
+        c.information?.primary
+          ? `<span class="location-guide-parking-primary">${c.information.primary}</span>`
+          : '',
+        c.information?.secondary
+          ? `<span class="location-guide-parking-note">${c.information.secondary
+              .split('\n')
+              .map(line => `<span>${line}</span>`)
+              .join('')}</span>`
+          : ''
+      ].filter(Boolean).join('<br>')
+    }]);
 
     const lat = Number(c.wedding.coordinates?.lat);
     const lng = Number(c.wedding.coordinates?.lng);
@@ -777,6 +744,10 @@
         }
 
         if (item && typeof item === 'object') {
+          if (item.html) {
+            return `<div class="location-guide-item">${item.html}</div>`;
+          }
+
           const dotStyle = item.lineColor ? ` style="background:${item.lineColor}"` : '';
           return `
             <div class="location-guide-item location-guide-item-line">
@@ -906,6 +877,61 @@
     });
   }
 
+  // ── Snap Upload ──
+  function buildSnap(c) {
+    const section = $('.snap-section');
+    if (!section) return;
+
+    const title = $('.snap-title', section);
+    const description = $('.snap-description', section);
+    const availability = $('.snap-availability', section);
+    const uploadLink = $('#snap-upload-link');
+
+    if (title) {
+      title.textContent = c.snap?.title || 'CAPTURE OUR MOMENTS';
+    }
+    if (description) {
+      description.textContent = c.snap?.description || '';
+    }
+    if (availability) {
+      availability.textContent = c.snap?.availabilityText || '';
+    }
+
+    const snapImage = $('.snap-polaroid-image', section);
+    if (snapImage) {
+      snapImage.src = 'images/snap/1.jpg';
+      snapImage.addEventListener('error', () => {
+        snapImage.closest('.snap-polaroid')?.classList.add('is-empty');
+        snapImage.removeAttribute('src');
+      }, { once: true });
+    }
+
+    if (!uploadLink) return;
+
+    const availableAt = c.snap?.uploadAvailableAt
+      ? new Date(c.snap.uploadAvailableAt)
+      : null;
+    const isAvailable = !availableAt || Date.now() >= availableAt.getTime();
+    const href = c.snap?.uploadLink;
+    uploadLink.textContent = c.snap?.buttonLabel || '사진 업로드';
+
+    if (href && isAvailable) {
+      uploadLink.href = href;
+      uploadLink.classList.remove('is-disabled');
+      return;
+    }
+
+    uploadLink.href = '#';
+    uploadLink.classList.add('is-disabled');
+    uploadLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      const message = isAvailable
+        ? '사진 업로드 링크를 준비 중입니다'
+        : '예식 당일부터 업로드 가능합니다';
+      showToast(message);
+    });
+  }
+
   // ── Account ──
   function buildAccount(c) {
     buildAccountGroup('groom', c.accounts.groom, `신랑측 계좌번호`);
@@ -952,6 +978,8 @@
 
   // ── Scroll Animations ──
   let scrollObserver = null;
+  let snapBgObserver = null;
+  let snapCardObserver = null;
   let posterAnimationBound = false;
   let posterAnimationTicking = false;
   let lastPosterScrollY = 0;
@@ -973,7 +1001,48 @@
       { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
     );
 
-    $$('.fade-in:not(.poster-section)').forEach(el => scrollObserver.observe(el));
+    $$('.fade-in:not(.poster-section):not(.snap-section)').forEach(el => scrollObserver.observe(el));
+
+    if (snapBgObserver) {
+      snapBgObserver.disconnect();
+    }
+    if (snapCardObserver) {
+      snapCardObserver.disconnect();
+    }
+
+    snapBgObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.intersectionRatio >= 0.3) {
+            entry.target.classList.add('visible');
+            snapBgObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: [0.3] }
+    );
+
+    snapCardObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.intersectionRatio >= 0.5) {
+            entry.target.classList.add('snap-card-visible');
+            snapCardObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: [0.5] }
+    );
+
+    const snapSection = $('.snap-section');
+    if (snapSection) {
+      if (!snapSection.classList.contains('visible')) {
+        snapBgObserver.observe(snapSection);
+      }
+      if (!snapSection.classList.contains('snap-card-visible')) {
+        snapCardObserver.observe(snapSection);
+      }
+    }
   }
 
   function updatePosterAnimation() {
@@ -1024,6 +1093,7 @@
   function resetScrollAnimations() {
     $$('.fade-in').forEach(el => el.classList.remove('visible'));
     $('.poster-section')?.classList.remove('poster-active');
+    $('.snap-section')?.classList.remove('snap-card-visible');
   }
 
   function reobserveAnimations() {
