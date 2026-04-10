@@ -654,8 +654,8 @@
       ].filter(Boolean).join('<br>')
     }]);
 
-    const lat = 37.50452;
-    const lng = 126.8769;
+    const lat = 37.5045;
+    const lng = 126.87684;
     const hasCoordinates = true;
 
     const naverLink = $('#link-naver-map');
@@ -712,10 +712,10 @@
       return;
     }
 
-    const center = new naver.maps.LatLng(37.5047, 126.87655);
+    const center = new naver.maps.LatLng(37.5045, 126.87684);
     const map = new naver.maps.Map('map', {
-      center: new naver.maps.LatLng(37.5047, 126.87655),
-      zoom: 10
+      center: new naver.maps.LatLng(37.5045, 126.87684),
+      zoom: 30
     });
 
     new naver.maps.Marker({
