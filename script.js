@@ -712,7 +712,7 @@
       return;
     }
 
-    const center = new naver.maps.LatLng(37.50382, 126.87983);
+    const center = new naver.maps.LatLng(37.50369, 126.87983);
     var map = new naver.maps.Map('map', {
       center,
       zoom: 17
