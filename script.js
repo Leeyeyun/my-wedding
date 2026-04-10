@@ -654,7 +654,7 @@
       ].filter(Boolean).join('<br>')
     }]);
 
-    const lat = 37.5042;
+    const lat = 37.50445;
     const lng = 126.8769;
     const hasCoordinates = true;
 
@@ -712,9 +712,9 @@
       return;
     }
 
-    const center = new naver.maps.LatLng(37.5042, 126.8769);
+    const center = new naver.maps.LatLng(37.50445, 126.8769);
     const map = new naver.maps.Map('map', {
-      center: new naver.maps.LatLng(37.5042, 126.8769),
+      center: new naver.maps.LatLng(37.50445, 126.8769),
       zoom: 16
     });
 
