@@ -44,8 +44,8 @@ const CONFIG = {
     address: "서울 구로구 경인로 565",
     tel: "02-2635-2222",
     coordinates: {
-      lat: 37.5665,
-      lng: 126.978
+      lat: 37.5036422,
+      lng: 126.879722
     },
     naverMap: {
       zoom: 17
