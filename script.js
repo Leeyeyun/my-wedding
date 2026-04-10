@@ -654,9 +654,9 @@
       ].filter(Boolean).join('<br>')
     }]);
 
-    const lat = Number(c.wedding.coordinates?.lat);
-    const lng = Number(c.wedding.coordinates?.lng);
-    const hasCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
+    const lat = 37.5036422;
+    const lng = 126.879722;
+    const hasCoordinates = true;
 
     const naverLink = $('#link-naver-map');
     const tmapLink = $('#link-tmap');
@@ -712,10 +712,10 @@
       return;
     }
 
-    const center = new naver.maps.LatLng(lat, lng);
+    const center = new naver.maps.LatLng(37.5036422, 126.879722);
     const map = new naver.maps.Map('map', {
-      center,
-      zoom: c.wedding.naverMap?.zoom || 16
+      center: new naver.maps.LatLng(37.5036422, 126.879722),
+      zoom: 16
     });
 
     new naver.maps.Marker({
