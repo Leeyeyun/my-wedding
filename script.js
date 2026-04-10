@@ -712,16 +712,27 @@
       return;
     }
 
+    const center = new naver.maps.LatLng(37.50382, 126.87983);
     var map = new naver.maps.Map('map', {
-      center: new naver.maps.LatLng(37.50369, 126.87983),
+      center,
       zoom: 17
     });
 
     new naver.maps.Marker({
-      position: new naver.maps.LatLng(37.50369, 126.87983),
+      position: center,
       map,
       title: c.wedding.venue
     });
+
+    const syncMapCenter = () => {
+      map.setCenter(center);
+      map.setZoom(17, false);
+    };
+
+    requestAnimationFrame(syncMapCenter);
+    window.setTimeout(syncMapCenter, 160);
+    window.setTimeout(syncMapCenter, 700);
+    window.addEventListener('resize', syncMapCenter, { passive: true });
 
     mapCard.classList.add('has-live-map');
     if (mapEmpty) {
