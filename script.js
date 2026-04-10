@@ -855,24 +855,24 @@
         name: (formData.get('name') || '').toString().trim(),
         companion: (formData.get('companion') || '').toString().trim(),
         note: (formData.get('note') || '').toString().trim(),
-        consent: !!formData.get('consent')
+        consent: formData.get('consent') ? 'Y' : 'N',
+        venue: c.wedding.venue || '',
+        weddingDate: c.wedding.date || '',
+        weddingTime: c.wedding.time || '',
+        source: 'mobile-wedding-rsvp'
       };
+
+      const requestBody = new URLSearchParams(payload);
 
       submitBtn.disabled = true;
       submitBtn.textContent = '전달 중...';
 
       try {
-        const response = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
+          mode: 'no-cors',
+          body: requestBody
         });
-
-        if (!response.ok) {
-          throw new Error(`Request failed: ${response.status}`);
-        }
 
         form.reset();
         showToast('참석 여부가 전달되었습니다');
