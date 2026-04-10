@@ -654,8 +654,8 @@
       ].filter(Boolean).join('<br>')
     }]);
 
-    const lat = 37.5043;
-    const lng = 126.8767;
+    const lat = 37.5042;
+    const lng = 126.8769;
     const hasCoordinates = true;
 
     const naverLink = $('#link-naver-map');
@@ -712,14 +712,13 @@
       return;
     }
 
-    const center = new naver.maps.LatLng(37.5043, 126.8767);
-    const map = new naver.maps.Map('map', {
-      center: new naver.maps.LatLng(37.5043, 126.8767),
-      zoom: 30
+    var map = new naver.maps.Map('map', {
+      center: new naver.maps.LatLng(37.5042, 126.8769),
+      zoom: 16
     });
 
     new naver.maps.Marker({
-      position: center,
+      position: new naver.maps.LatLng(37.5042, 126.8769),
       map,
       title: c.wedding.venue
     });
