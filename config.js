@@ -89,7 +89,7 @@ const CONFIG = {
     title: "참석 의사 전달",
     message: "특별한 날 축하의 마음으로 참석해주시는\n모든 분들을 한 분 한 분 더욱 귀하게 모실 수 있도록,\n아래 버튼으로 신랑 & 신부에게 꼭 참석여부 전달을 부탁드립니다.",
     buttonLabel: "참석의사 전달하기",
-    sheetEndpoint: "https://script.google.com/macros/s/AKfycbwe5a8yzmrtGJh787-KVv6_ZsOXczG0SqCAshzJUTsLxrcrysNrUxzYBavGYP0pA1oouA/exec",
+    sheetEndpoint: "https://script.google.com/macros/s/AKfycbx5t5nrTM_ov1t2ihAA0YBbYfh-bzB-btlFl8lg2Tbrp7sh171GBFQXKNAgxiVdbrsC/exec",
     privacyNoticeUrl: ""
   },
 
