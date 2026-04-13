@@ -63,6 +63,12 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  let attendancePromptShown = false;
+
+  function shouldShowAttendancePrompt() {
+    return !attendancePromptShown;
+  }
+
   // ── Image Loading ──
   function loadImagesFromFolder(folder, maxAttempts = 50) {
     return new Promise(resolve => {
@@ -777,6 +783,10 @@
     const title = $('.attendance-title');
     const message = $('.attendance-message');
     const link = $('#attendance-link');
+    const promptMessage = $('#attendance-prompt-message');
+    const promptCouple = $('#attendance-prompt-couple');
+    const promptDatetime = $('#attendance-prompt-datetime');
+    const promptVenue = $('#attendance-prompt-venue');
 
     if (title) {
       title.textContent = c.attendance?.title || '참석 여부 전달';
@@ -784,10 +794,30 @@
     if (message) {
       message.textContent = c.attendance?.message || '';
     }
+    if (promptMessage) {
+      promptMessage.textContent = c.attendance?.message || '';
+    }
+    if (promptCouple) {
+      promptCouple.textContent = `${c.groom.name} ♥ ${c.bride.name}`;
+    }
+    if (promptDatetime) {
+      const dateInfo = formatDate(c.wedding.date);
+      promptDatetime.textContent = `${dateInfo.year}년 ${dateInfo.month}월 ${dateInfo.day}일 ${dateInfo.dayName}요일 ${formatCeremonyTime(c.wedding.time)}`;
+    }
+    if (promptVenue) {
+      promptVenue.textContent = c.wedding.hall
+        ? `${c.wedding.venue} ${c.wedding.hall}`
+        : c.wedding.venue;
+    }
     if (!link) return;
     const buttonLabel = c.attendance?.buttonLabel || '참석 여부 전달';
     link.textContent = buttonLabel;
     link.classList.remove('is-placeholder');
+
+    const promptOpenButton = $('#attendance-prompt-open');
+    if (promptOpenButton) {
+      promptOpenButton.textContent = buttonLabel;
+    }
   }
 
   function initRsvpModal(c) {
@@ -797,6 +827,9 @@
     const form = $('#rsvp-form');
     const submitBtn = $('#rsvp-submit');
     const privacyLink = $('#rsvp-privacy-link');
+    const promptOverlay = $('#attendance-prompt-overlay');
+    const promptCloseBtn = $('#attendance-prompt-close');
+    const promptOpenBtn = $('#attendance-prompt-open');
     if (!openBtn || !overlay || !closeBtn || !form || !submitBtn || !privacyLink) return;
 
     const privacyNoticeUrl = c.attendance?.privacyNoticeUrl;
@@ -809,19 +842,30 @@
     }
 
     function openSheet() {
+      closeAttendancePrompt();
       overlay.classList.add('active');
       overlay.setAttribute('aria-hidden', 'false');
+      document.documentElement.classList.add('sheet-open');
       document.body.classList.add('sheet-open');
     }
 
     function closeSheet() {
       overlay.classList.remove('active');
       overlay.setAttribute('aria-hidden', 'true');
+      document.documentElement.classList.remove('sheet-open');
       document.body.classList.remove('sheet-open');
+    }
+
+    function handlePromptDismiss() {
+      closeAttendancePrompt();
     }
 
     openBtn.addEventListener('click', openSheet);
     closeBtn.addEventListener('click', closeSheet);
+    promptOpenBtn?.addEventListener('click', () => {
+      openSheet();
+    });
+    promptCloseBtn?.addEventListener('click', handlePromptDismiss);
 
     overlay.addEventListener('click', (event) => {
       if (event.target === overlay) {
@@ -829,9 +873,18 @@
       }
     });
 
+    promptOverlay?.addEventListener('click', (event) => {
+      if (event.target === promptOverlay) {
+        handlePromptDismiss();
+      }
+    });
+
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && overlay.classList.contains('active')) {
         closeSheet();
+      }
+      if (event.key === 'Escape' && promptOverlay?.classList.contains('active')) {
+        handlePromptDismiss();
       }
     });
 
@@ -885,6 +938,25 @@
         submitBtn.textContent = '전달';
       }
     });
+  }
+
+  function openAttendancePrompt() {
+    const promptOverlay = $('#attendance-prompt-overlay');
+    if (!promptOverlay || promptOverlay.classList.contains('active')) return;
+    attendancePromptShown = true;
+    promptOverlay.classList.add('active');
+    promptOverlay.setAttribute('aria-hidden', 'false');
+    document.documentElement.classList.add('prompt-open');
+    document.body.classList.add('prompt-open');
+  }
+
+  function closeAttendancePrompt() {
+    const promptOverlay = $('#attendance-prompt-overlay');
+    if (!promptOverlay) return;
+    promptOverlay.classList.remove('active');
+    promptOverlay.setAttribute('aria-hidden', 'true');
+    document.documentElement.classList.remove('prompt-open');
+    document.body.classList.remove('prompt-open');
   }
 
   // ── Snap Upload ──
@@ -990,6 +1062,7 @@
   let scrollObserver = null;
   let snapBgObserver = null;
   let snapCardObserver = null;
+  let attendancePromptObserver = null;
   let posterAnimationBound = false;
   let posterAnimationTicking = false;
   let lastPosterScrollY = 0;
@@ -1008,7 +1081,7 @@
           }
         });
       },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.3, rootMargin: '0px 0px 0px 0px' }
     );
 
     $$('.fade-in:not(.poster-section):not(.snap-section)').forEach(el => scrollObserver.observe(el));
@@ -1051,6 +1124,33 @@
       }
       if (!snapSection.classList.contains('snap-card-visible')) {
         snapCardObserver.observe(snapSection);
+      }
+    }
+
+    if (attendancePromptObserver) {
+      attendancePromptObserver.disconnect();
+    }
+
+    if (shouldShowAttendancePrompt()) {
+      const invitationSection = $('.invitation');
+      if (invitationSection) {
+        attendancePromptObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach(entry => {
+              if (entry.intersectionRatio >= 0.5) {
+                window.setTimeout(() => {
+                  if (shouldShowAttendancePrompt()) {
+                    openAttendancePrompt();
+                  }
+                }, 180);
+                attendancePromptObserver.disconnect();
+              }
+            });
+          },
+          { threshold: [0.5] }
+        );
+
+        attendancePromptObserver.observe(invitationSection);
       }
     }
   }

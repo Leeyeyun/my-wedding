@@ -63,8 +63,16 @@ body.intro-active {
   touch-action: none;
 }
 
+html.sheet-open,
 body.sheet-open {
   overflow: hidden;
+}
+
+html.prompt-open,
+body.prompt-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 img {
@@ -436,7 +444,7 @@ a {
 }
 
 .invitation-parents {
-  font-size: 14px;
+  font-size: 15px;
   color: #666;
   line-height: 2;
 }
@@ -740,6 +748,54 @@ a {
   color: #534e4b;
 }
 
+.calendar-countdown__header,
+.calendar-countdown__divider,
+.calendar-countdown__calendar,
+.calendar-countdown__summary,
+.calendar-countdown__message {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.calendar-countdown.visible .calendar-countdown__header {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.04s;
+}
+
+.calendar-countdown.visible .calendar-countdown__divider:first-of-type {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.16s;
+}
+
+.calendar-countdown.visible .calendar-countdown__calendar {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.28s;
+}
+
+.calendar-countdown.visible .calendar-countdown__divider:last-of-type {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.4s;
+}
+
+.calendar-countdown.visible .calendar-countdown__summary {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.52s;
+}
+
+.calendar-countdown.visible .calendar-countdown__message {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.64s;
+}
+
 .calendar-countdown__divider {
   width: min(100%, 368px);
   height: 1px;
@@ -822,6 +878,7 @@ a {
   background: #fff;
   padding-left: 0;
   padding-right: 0;
+  padding-bottom: 4px;
 }
 
 .gallery-header {
@@ -1026,16 +1083,21 @@ a {
   transition: opacity 0.2s;
 }
 
+.modal-nav-icon {
+  width: 56px;
+  height: 56px;
+}
+
 .modal-nav:hover {
   opacity: 0.78;
 }
 
 .modal-prev {
-  left: 8px;
+  left: calc(2px + env(safe-area-inset-left));
 }
 
 .modal-next {
-  right: 8px;
+  right: calc(2px + env(safe-area-inset-right));
 }
 
 .modal-dot {
@@ -1049,6 +1111,26 @@ a {
 .modal-dot.is-active {
   background: rgba(44, 39, 35, 0.78);
   transform: scale(1.08);
+}
+
+@media (max-width: 767px) {
+  .modal-nav {
+    width: 36px;
+    height: 76px;
+  }
+
+  .modal-prev {
+    left: calc(env(safe-area-inset-left) + 1px);
+  }
+
+  .modal-next {
+    right: calc(env(safe-area-inset-right) + 1px);
+  }
+
+  .modal-nav-icon {
+    width: 34px;
+    height: 34px;
+  }
 }
 
 /* ── Location Section ── */
@@ -1398,6 +1480,104 @@ a {
   border-color: #ece7e1;
 }
 
+/* ── RSVP Prompt Popup ── */
+.attendance-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 16, 14, 0.26);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2150;
+}
+
+.attendance-prompt-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.attendance-prompt {
+  position: relative;
+  width: min(100%, 348px);
+  padding: 28px 24px 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 24px;
+  box-shadow: 0 22px 54px rgba(24, 20, 16, 0.16);
+  text-align: center;
+  transform: translateY(26px);
+  opacity: 0;
+  transition:
+    transform 0.58s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.58s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.attendance-prompt-overlay.active .attendance-prompt {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.attendance-prompt-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #9a938c;
+}
+
+.attendance-prompt-title {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #2f2b27;
+}
+
+.attendance-prompt-message {
+  margin: 18px 0 20px;
+  font-size: 14px;
+  line-height: 1.9;
+  color: #69635d;
+  white-space: pre-line;
+  word-break: keep-all;
+}
+
+.attendance-prompt-meta {
+  margin: 0 0 24px;
+  padding: 18px 0 0;
+  border-top: 1px dashed #e6dfd9;
+  display: grid;
+  gap: 10px;
+}
+
+.attendance-prompt-meta-line {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #5e5750;
+}
+
+.attendance-prompt-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 220px);
+  min-height: 43px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 /* ── Snap Section ── */
 .snap-section {
   position: relative;
@@ -1602,15 +1782,16 @@ a {
 .rsvp-sheet {
   position: absolute;
   left: 50%;
-  bottom: 0;
+  top: 0;
   width: min(var(--app-safe-width), var(--app-frame-width));
-  max-height: min(86vh, 820px);
-  transform: translate(-50%, 28px);
+  height: 100dvh;
+  max-height: none;
+  transform: translate(-50%, 24px);
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 24px 24px 0 0;
-  box-shadow: 0 -10px 36px rgba(0, 0, 0, 0.12);
+  border-radius: 0;
+  box-shadow: 0 0 36px rgba(0, 0, 0, 0.12);
   transition: transform 0.34s ease, opacity 0.34s ease;
   opacity: 0;
 }
@@ -1631,7 +1812,7 @@ a {
   border-bottom: 1px solid #f0ebe5;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(10px);
-  border-radius: 24px 24px 0 0;
+  border-radius: 0;
 }
 
 .rsvp-sheet-title {
@@ -1656,6 +1837,17 @@ a {
 .rsvp-form {
   overflow-y: auto;
   padding: 20px 20px calc(28px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 767px) {
+  .attendance-prompt-overlay {
+    padding: 20px;
+  }
+
+  .attendance-prompt {
+    width: 100%;
+    max-width: 340px;
+  }
 }
 
 .rsvp-field + .rsvp-field {

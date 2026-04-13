@@ -280,12 +280,12 @@
     </svg>
   </button>
   <button class="modal-nav modal-prev" type="button" aria-label="이전">
-    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="modal-nav-icon" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </button>
   <button class="modal-nav modal-next" type="button" aria-label="다음">
-    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="modal-nav-icon" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="9 6 15 12 9 18"/>
     </svg>
   </button>
@@ -293,6 +293,26 @@
     <div class="modal-track swiper-wrapper"></div>
   </div>
   <div class="modal-counter"></div>
+</div>
+
+<!-- ====== RSVP Prompt Popup ====== -->
+<div class="attendance-prompt-overlay" id="attendance-prompt-overlay" aria-hidden="true">
+  <section class="attendance-prompt" role="dialog" aria-modal="true" aria-labelledby="attendance-prompt-title">
+    <button type="button" class="attendance-prompt-close" id="attendance-prompt-close" aria-label="닫기">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <div class="attendance-prompt-title" id="attendance-prompt-title">참석 여부 전달</div>
+    <p class="attendance-prompt-message" id="attendance-prompt-message"></p>
+    <div class="attendance-prompt-meta">
+      <div class="attendance-prompt-meta-line" id="attendance-prompt-couple"></div>
+      <div class="attendance-prompt-meta-line" id="attendance-prompt-datetime"></div>
+      <div class="attendance-prompt-meta-line" id="attendance-prompt-venue"></div>
+    </div>
+    <button type="button" class="attendance-prompt-button" id="attendance-prompt-open">참석 여부 전달</button>
+  </section>
 </div>
 
 <!-- ====== RSVP Bottom Sheet ====== -->
