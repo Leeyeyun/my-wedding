@@ -251,6 +251,7 @@
       const scrollable = Math.max(hero.offsetHeight - viewportHeight, 1);
       const progress = Math.min(Math.max(-rect.top / scrollable, 0), 1);
       hero.style.setProperty('--hero-progress', progress.toFixed(3));
+      hero.classList.toggle('hero-scrolled', progress > 0.04);
     }
 
     function requestUpdate() {
