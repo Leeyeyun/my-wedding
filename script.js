@@ -64,6 +64,7 @@
   }
 
   let attendancePromptShown = false;
+  let attendancePromptArmed = false;
 
   function shouldShowAttendancePrompt() {
     return !attendancePromptShown;
@@ -140,6 +141,14 @@
   // ── Build Page ──
   async function init() {
     if (typeof CONFIG === 'undefined') return;
+
+    document.documentElement.classList.remove('intro-active', 'sheet-open', 'prompt-open');
+    document.body.classList.remove('intro-active', 'sheet-open', 'prompt-open');
+    $('#attendance-prompt-overlay')?.classList.remove('active');
+    $('#attendance-prompt-overlay')?.setAttribute('aria-hidden', 'true');
+    $('#rsvp-sheet-overlay')?.classList.remove('active');
+    $('#rsvp-sheet-overlay')?.setAttribute('aria-hidden', 'true');
+    attendancePromptArmed = false;
 
     window.scrollTo(0, 0);
 
@@ -993,9 +1002,84 @@
     const availableAt = c.snap?.uploadAvailableAt
       ? new Date(c.snap.uploadAvailableAt)
       : null;
-    const isAvailable = !availableAt || Date.now() >= availableAt.getTime();
+    const closeAt = c.snap?.uploadCloseAt
+      ? new Date(c.snap.uploadCloseAt)
+      : null;
+    const now = Date.now();
+    const hasStarted = !availableAt || now >= availableAt.getTime();
+    const hasClosed = !!closeAt && now > closeAt.getTime();
+    const isAvailable = hasStarted && !hasClosed;
     const href = c.snap?.uploadLink;
+    const cloudinaryConfig = c.snap?.cloudinary || {};
+    const canUseCloudinary =
+      !!window.cloudinary &&
+      !!cloudinaryConfig.cloudName &&
+      !!cloudinaryConfig.uploadPreset;
     uploadLink.textContent = c.snap?.buttonLabel || '사진 업로드';
+
+    if (isAvailable && canUseCloudinary) {
+      let uploadedCount = 0;
+      const widget = window.cloudinary.createUploadWidget(
+        {
+          cloudName: cloudinaryConfig.cloudName,
+          uploadPreset: cloudinaryConfig.uploadPreset,
+          sources: ['local', 'camera'],
+          multiple: true,
+          maxFiles: cloudinaryConfig.maxFiles || 100,
+          maxFileSize: cloudinaryConfig.maxFileSize || 200000000,
+          resourceType: 'auto',
+          clientAllowedFormats: ['jpg', 'jpeg', 'png', 'heic', 'mp4', 'mov'],
+          showAdvancedOptions: false,
+          singleUploadAutoClose: false,
+          showCompletedButton: true,
+          text: {
+            ko: {
+              or: '또는',
+              menu: {
+                files: '파일 선택',
+                camera: '카메라'
+              },
+              local: {
+                browse: '파일 선택',
+                dd_title_single: '파일을 여기로 드래그하세요',
+                dd_title_multi: '파일을 여기로 드래그하세요'
+              },
+              queue: {
+                title: '업로드 대기열',
+                title_uploading_with_counter: '업로드 중',
+                title_processing_with_counter: '처리 중'
+              }
+            }
+          }
+        },
+        (error, result) => {
+          if (error) {
+            console.error(error);
+            showToast('업로드에 실패했습니다. 다시 시도해 주세요');
+            return;
+          }
+
+          if (!result) return;
+
+          if (result.event === 'success') {
+            uploadedCount += 1;
+          }
+
+          if (result.event === 'queues-end' && uploadedCount > 0) {
+            showToast(uploadedCount === 1 ? '사진이 업로드되었습니다' : `${uploadedCount}개 파일이 업로드되었습니다`);
+            uploadedCount = 0;
+          }
+        }
+      );
+
+      uploadLink.href = '#';
+      uploadLink.classList.remove('is-disabled');
+      uploadLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        widget.open();
+      });
+      return;
+    }
 
     if (href && isAvailable) {
       uploadLink.href = href;
@@ -1007,9 +1091,11 @@
     uploadLink.classList.add('is-disabled');
     uploadLink.addEventListener('click', (event) => {
       event.preventDefault();
-      const message = isAvailable
-        ? '사진 업로드 링크를 준비 중입니다'
-        : '예식 당일부터 업로드 가능합니다';
+      const message = hasClosed
+        ? '업로드 기간이 종료되었습니다'
+        : isAvailable
+          ? '사진 업로드 링크를 준비 중입니다'
+          : '예식 당일부터 업로드 가능합니다';
       showToast(message);
     });
   }
@@ -1108,13 +1194,13 @@
     snapCardObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          if (entry.intersectionRatio >= 0.5) {
-            entry.target.classList.add('snap-card-visible');
-            snapCardObserver.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: [0.5] }
+              if (entry.intersectionRatio >= 0.5) {
+                entry.target.classList.add('snap-card-visible');
+                snapCardObserver.unobserve(entry.target);
+              }
+            });
+          },
+      { threshold: [0.65] }
     );
 
     const snapSection = $('.snap-section');
@@ -1132,12 +1218,22 @@
     }
 
     if (shouldShowAttendancePrompt()) {
+      const armAttendancePrompt = () => {
+        if (attendancePromptArmed) return;
+        if ((window.scrollY || window.pageYOffset || 0) > 80) {
+          attendancePromptArmed = true;
+          window.removeEventListener('scroll', armAttendancePrompt);
+        }
+      };
+
+      window.addEventListener('scroll', armAttendancePrompt, { passive: true });
+
       const invitationSection = $('.invitation');
       if (invitationSection) {
         attendancePromptObserver = new IntersectionObserver(
           (entries) => {
             entries.forEach(entry => {
-              if (entry.intersectionRatio >= 0.5) {
+              if (entry.intersectionRatio >= 0.5 && attendancePromptArmed) {
                 window.setTimeout(() => {
                   if (shouldShowAttendancePrompt()) {
                     openAttendancePrompt();

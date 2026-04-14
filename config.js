@@ -98,8 +98,15 @@ const CONFIG = {
     description: "신랑신부의 행복한 순간을 담아주세요.\n예식 당일, 아래 버튼을 통해 사진을 올려주세요.",
     buttonLabel: "사진 업로드",
     uploadAvailableAt: "2026-05-10T11:00:00",
+    uploadCloseAt: "2026-05-15T23:59:59",
     availabilityText: "2026-05-10 11:00부터 업로드 가능합니다",
-    uploadLink: ""
+    uploadLink: "",
+    cloudinary: {
+      cloudName: "",
+      uploadPreset: "",
+      maxFiles: 100,
+      maxFileSize: 200000000
+    }
   },
 
   // ── 포스터 섹션 ──
