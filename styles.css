@@ -104,6 +104,25 @@ a {
   isolation: isolate;
 }
 
+.wrapper::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: min(var(--app-safe-width), var(--app-frame-width));
+  transform: translateX(-50%);
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.42s ease;
+  z-index: 1;
+}
+
+.wrapper.wrapper-calendar-covered::before {
+  opacity: 1;
+}
+
 @media (min-width: 768px) {
   .wrapper {
     max-width: 460px;
@@ -196,6 +215,21 @@ a {
   overflow: hidden;
   opacity: 1;
   transition: opacity 1s ease;
+}
+
+.hero-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  transition: opacity 0.42s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero.hero-calendar-covered .hero-media::after {
+  opacity: 1;
 }
 
 .hero-image {

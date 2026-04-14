@@ -63,6 +63,39 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  function isLocalPreview() {
+    return ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  }
+
+  function loadNaverMapScript() {
+    if (window.naver?.maps) {
+      return Promise.resolve();
+    }
+
+    if (isLocalPreview()) {
+      window.__naverMapAuthFailed = true;
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const existingScript = document.querySelector('script[data-naver-map-script="true"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', resolve, { once: true });
+        existingScript.addEventListener('error', reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=d7zu5owtdw';
+      script.async = true;
+      script.defer = true;
+      script.dataset.naverMapScript = 'true';
+      script.addEventListener('load', resolve, { once: true });
+      script.addEventListener('error', reject, { once: true });
+      document.head.appendChild(script);
+    });
+  }
+
   let attendancePromptShown = false;
   let attendancePromptArmed = false;
 
@@ -162,6 +195,13 @@
     buildInvitation(c, dateInfo, timeText);
     buildPoster(c, dateInfo);
     buildCalendarCountdown(c, dateInfo);
+    try {
+      await loadNaverMapScript();
+    } catch (error) {
+      window.__naverMapAuthFailed = true;
+      console.error('Failed to load NAVER Map script', error);
+    }
+
     buildLocation(c);
     buildAttendance(c);
     buildSnap(c);
@@ -176,7 +216,7 @@
     showLoadingState();
 
     // Load images asynchronously
-    const galleryImages = await loadImagesFromFolder('gallery');
+    const galleryImages = await loadImagesFromFolder('gallery', 15);
 
     // Render image-dependent sections
     buildGallery(galleryImages);
@@ -240,6 +280,8 @@
 
   function initHeroMotion() {
     const hero = $('.hero');
+    const wrapper = $('.wrapper');
+    const calendarSection = $('.calendar-countdown');
     if (!hero) return;
 
     let ticking = false;
@@ -251,7 +293,13 @@
       const scrollable = Math.max(hero.offsetHeight - viewportHeight, 1);
       const progress = Math.min(Math.max(-rect.top / scrollable, 0), 1);
       hero.style.setProperty('--hero-progress', progress.toFixed(3));
-      hero.classList.toggle('hero-scrolled', progress > 0.04);
+
+      if (calendarSection) {
+        const calendarRect = calendarSection.getBoundingClientRect();
+        const shouldCoverHero = calendarRect.top <= viewportHeight * 0.82;
+        hero.classList.toggle('hero-calendar-covered', shouldCoverHero);
+        wrapper?.classList.toggle('wrapper-calendar-covered', shouldCoverHero);
+      }
     }
 
     function requestUpdate() {
@@ -645,7 +693,7 @@
     }
 
     if (mapFallbackImg) {
-      mapFallbackImg.src = 'images/location/1.jpg';
+      mapFallbackImg.removeAttribute('src');
       mapFallbackImg.alt = `${c.wedding.venue} 약도`;
     }
 
@@ -860,6 +908,9 @@
     }
 
     function closeSheet() {
+      if (overlay.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
       overlay.classList.remove('active');
       overlay.setAttribute('aria-hidden', 'true');
       document.documentElement.classList.remove('sheet-open');
@@ -963,6 +1014,9 @@
   function closeAttendancePrompt() {
     const promptOverlay = $('#attendance-prompt-overlay');
     if (!promptOverlay) return;
+    if (promptOverlay.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
     promptOverlay.classList.remove('active');
     promptOverlay.setAttribute('aria-hidden', 'true');
     document.documentElement.classList.remove('prompt-open');
