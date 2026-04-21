@@ -63,39 +63,6 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  function isLocalPreview() {
-    return ['localhost', '127.0.0.1'].includes(window.location.hostname);
-  }
-
-  function loadNaverMapScript() {
-    if (window.naver?.maps) {
-      return Promise.resolve();
-    }
-
-    if (isLocalPreview()) {
-      window.__naverMapAuthFailed = true;
-      return Promise.resolve();
-    }
-
-    return new Promise((resolve, reject) => {
-      const existingScript = document.querySelector('script[data-naver-map-script="true"]');
-      if (existingScript) {
-        existingScript.addEventListener('load', resolve, { once: true });
-        existingScript.addEventListener('error', reject, { once: true });
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=d7zu5owtdw';
-      script.async = true;
-      script.defer = true;
-      script.dataset.naverMapScript = 'true';
-      script.addEventListener('load', resolve, { once: true });
-      script.addEventListener('error', reject, { once: true });
-      document.head.appendChild(script);
-    });
-  }
-
   let attendancePromptShown = false;
   let attendancePromptArmed = false;
 
@@ -195,13 +162,6 @@
     buildInvitation(c, dateInfo, timeText);
     buildPoster(c, dateInfo);
     buildCalendarCountdown(c, dateInfo);
-    try {
-      await loadNaverMapScript();
-    } catch (error) {
-      window.__naverMapAuthFailed = true;
-      console.error('Failed to load NAVER Map script', error);
-    }
-
     buildLocation(c);
     buildAttendance(c);
     buildSnap(c);
@@ -468,7 +428,9 @@
 
     function update() {
       const now = new Date();
-      const diff = target - now;
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const targetDate = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+      const diff = targetDate - today;
       const messageEl = $('#calendar-countdown-message');
 
       if (diff <= 0) {
@@ -478,7 +440,7 @@
         return;
       }
 
-      const days = Math.floor(diff / dayMs);
+      const days = Math.round(diff / dayMs);
       if (messageEl) {
         messageEl.innerHTML = `${groomName} <span class="calendar-countdown__message-heart">♥</span> ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight"><strong class="calendar-countdown__message-strong">${days}일</strong></span> 남았습니다.`;
       }
