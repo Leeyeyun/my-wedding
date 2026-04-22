@@ -97,15 +97,34 @@ const CONFIG = {
     title: "CAPTURE OUR MOMENTS",
     description: "신랑신부의 행복한 순간을 담아주세요.\n예식 당일, 아래 버튼을 통해 사진을 올려주세요.",
     buttonLabel: "사진 업로드",
-    uploadAvailableAt: "2026-05-10T11:00:00",
+    uploadAvailableAt: "2026-04-23T00:00:00",
     uploadCloseAt: "2026-05-15T23:59:59",
-    availabilityText: "2026-05-10 11:00부터 업로드 가능합니다",
+    availabilityText: "지금 테스트 가능합니다",
     uploadLink: "",
-    cloudinary: {
-      cloudName: "",
-      uploadPreset: "",
-      maxFiles: 100,
-      maxFileSize: 200000000
+    noticeTitle: "업로드 안내",
+    noticeLines: [
+      "한 번에 최대 20장까지 업로드하실 수 있어요.",
+      "사진 파일만 업로드 가능합니다.",
+      "예식 당일부터 5일 동안 업로드하실 수 있어요.",
+      "업로드한 파일은 신랑신부 전용 저장소에 보관됩니다."
+    ],
+    upload: {
+      provider: "supabase",
+      supabaseUrl: "https://ynuqghynjjvuuhczvvkj.supabase.co",
+      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InludXFnaHluamp2dXVoY3p2dmtqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTg5MDYsImV4cCI6MjA5MjMzNDkwNn0.xHNbwSgdnVRV_AhcHfeq38J3dxOgv1S1NDsNQCXHfDs",
+      bucket: "wedding-snap",
+      folder: "wedding-snap",
+      metadataTable: "snap_messages",
+      maxFiles: 20,
+      maxFileSize: 10485760,
+      allowedMimeTypes: [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+        "image/avif"
+      ]
     }
   },
 

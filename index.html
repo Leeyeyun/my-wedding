@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
-  <link rel="stylesheet" href="styles.css?v=20260410-3">
+  <link rel="stylesheet" href="styles.css?v=20260421-1">
 </head>
 <body>
 
@@ -228,7 +228,7 @@
         </div>
         <div class="snap-body">
           <p class="snap-description"></p>
-          <a href="#" id="snap-upload-link" class="snap-upload-button" target="_blank" rel="noopener">사진 업로드</a>
+          <button type="button" id="snap-upload-link" class="snap-upload-button">사진 업로드</button>
           <p class="snap-availability"></p>
         </div>
       </div>
@@ -293,6 +293,51 @@
     <div class="modal-track swiper-wrapper"></div>
   </div>
   <div class="modal-counter"></div>
+</div>
+
+<!-- ====== Snap Upload Modal ====== -->
+<div class="snap-upload-overlay" id="snap-upload-overlay" aria-hidden="true">
+  <section class="snap-upload-sheet" role="dialog" aria-modal="true" aria-labelledby="snap-upload-title">
+    <div class="snap-upload-header">
+      <div class="snap-upload-title" id="snap-upload-title">사진 업로드</div>
+      <button type="button" class="snap-upload-close" id="snap-upload-close" aria-label="닫기">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <form class="snap-upload-form" id="snap-upload-form">
+      <div class="snap-upload-notice">
+        <div class="snap-upload-notice-title" id="snap-upload-notice-title">업로드 안내</div>
+        <ul class="snap-upload-notice-list" id="snap-upload-notice-list"></ul>
+      </div>
+
+      <div class="rsvp-field">
+        <label class="rsvp-label" for="snap-uploader-name">성함 <span>*</span></label>
+        <input type="text" id="snap-uploader-name" name="uploaderName" class="rsvp-input" required>
+      </div>
+
+      <div class="rsvp-field">
+        <label class="rsvp-label" for="snap-uploader-note">축하 한마디</label>
+        <textarea id="snap-uploader-note" name="uploaderNote" class="rsvp-textarea snap-upload-textarea" placeholder="신랑신부에게 전하고 싶은 말을 남겨주세요"></textarea>
+      </div>
+
+      <div class="rsvp-field">
+        <div class="rsvp-label">사진 첨부 <span>*</span></div>
+        <input type="file" id="snap-upload-input" class="snap-upload-input" accept="image/*" multiple>
+        <button type="button" class="snap-upload-picker" id="snap-upload-picker">
+          <span class="snap-upload-picker-plus">+</span>
+          <span class="snap-upload-picker-text">터치하여 사진 추가</span>
+        </button>
+        <div class="snap-upload-summary" id="snap-upload-summary">선택된 사진이 없습니다.</div>
+        <div class="snap-upload-preview" id="snap-upload-preview"></div>
+      </div>
+
+      <button type="submit" class="rsvp-submit snap-upload-submit" id="snap-upload-submit">업로드</button>
+    </form>
+  </section>
 </div>
 
 <!-- ====== RSVP Prompt Popup ====== -->
@@ -403,7 +448,7 @@
 </div>
 
 <!-- Scripts -->
-<script src="config.js?v=20260413-1"></script>
+<script src="config.js?v=20260422-1"></script>
 <script>
   window.navermap_authFailure = function () {
     window.__naverMapAuthFailed = true;
@@ -413,7 +458,6 @@
 <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=d7zu5owtdw"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.0/kakao.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="https://upload-widget.cloudinary.com/latest/global/all.js"></script>
-<script src="script.js?v=20260413-1"></script>
+<script src="script.js?v=20260422-1"></script>
 </body>
 </html>

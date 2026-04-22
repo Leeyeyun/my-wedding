@@ -63,8 +63,68 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0MB';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let value = bytes;
+    let unitIndex = 0;
+
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex += 1;
+    }
+
+    const decimals = value >= 10 || unitIndex === 0 ? 0 : 1;
+    return `${value.toFixed(decimals)}${units[unitIndex]}`;
+  }
+
+  function sanitizePathSegment(value) {
+    return (value || '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-z0-9-_]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'file';
+  }
+
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return String(text || '').replace(/[&<>"']/g, char => map[char]);
+  }
+
+  function getSnapUploadErrorMessage(error) {
+    const message = (error?.message || '').toLowerCase();
+
+    if (message.includes('row-level security') || message.includes('new row violates row-level security policy')) {
+      return 'Supabase 업로드 권한 설정이 아직 안 된 것 같아요';
+    }
+
+    if (message.includes('bucket') && message.includes('not found')) {
+      return '버킷 이름이 다르거나 아직 생성되지 않았어요';
+    }
+
+    if (message.includes('mime') || message.includes('content type') || message.includes('file size')) {
+      return '버킷의 파일 형식 또는 용량 제한에 걸렸어요';
+    }
+
+    if (message.includes('jwt') || message.includes('unauthorized') || message.includes('forbidden')) {
+      return 'Supabase 키 또는 업로드 권한을 다시 확인해 주세요';
+    }
+
+    return '업로드 연결 정보 또는 권한 설정을 다시 확인해 주세요';
+  }
+
   let attendancePromptShown = false;
   let attendancePromptArmed = false;
+  let snapSelectedFiles = [];
+  let snapPreviewUrls = [];
 
   function shouldShowAttendancePrompt() {
     return !attendancePromptShown;
@@ -165,6 +225,7 @@
     buildLocation(c);
     buildAttendance(c);
     buildSnap(c);
+    initSnapUpload(c);
     buildAccount(c);
     initRsvpModal(c);
     initScrollAnimations();
@@ -992,7 +1053,6 @@
 
     const title = $('.snap-title', section);
     const description = $('.snap-description', section);
-    const availability = $('.snap-availability', section);
     const uploadLink = $('#snap-upload-link');
 
     if (title) {
@@ -1000,9 +1060,6 @@
     }
     if (description) {
       description.textContent = c.snap?.description || '';
-    }
-    if (availability) {
-      availability.textContent = c.snap?.availabilityText || '';
     }
 
     const snapImage = $('.snap-polaroid-image', section);
@@ -1015,106 +1072,349 @@
     }
 
     if (!uploadLink) return;
-
-    const availableAt = c.snap?.uploadAvailableAt
-      ? new Date(c.snap.uploadAvailableAt)
-      : null;
-    const closeAt = c.snap?.uploadCloseAt
-      ? new Date(c.snap.uploadCloseAt)
-      : null;
-    const now = Date.now();
-    const hasStarted = !availableAt || now >= availableAt.getTime();
-    const hasClosed = !!closeAt && now > closeAt.getTime();
-    const isAvailable = hasStarted && !hasClosed;
-    const href = c.snap?.uploadLink;
-    const cloudinaryConfig = c.snap?.cloudinary || {};
-    const canUseCloudinary =
-      !!window.cloudinary &&
-      !!cloudinaryConfig.cloudName &&
-      !!cloudinaryConfig.uploadPreset;
     uploadLink.textContent = c.snap?.buttonLabel || '사진 업로드';
+  }
 
-    if (isAvailable && canUseCloudinary) {
-      let uploadedCount = 0;
-      const widget = window.cloudinary.createUploadWidget(
-        {
-          cloudName: cloudinaryConfig.cloudName,
-          uploadPreset: cloudinaryConfig.uploadPreset,
-          sources: ['local', 'camera'],
-          multiple: true,
-          maxFiles: cloudinaryConfig.maxFiles || 100,
-          maxFileSize: cloudinaryConfig.maxFileSize || 200000000,
-          resourceType: 'auto',
-          clientAllowedFormats: ['jpg', 'jpeg', 'png', 'heic', 'mp4', 'mov'],
-          showAdvancedOptions: false,
-          singleUploadAutoClose: false,
-          showCompletedButton: true,
-          text: {
-            ko: {
-              or: '또는',
-              menu: {
-                files: '파일 선택',
-                camera: '카메라'
-              },
-              local: {
-                browse: '파일 선택',
-                dd_title_single: '파일을 여기로 드래그하세요',
-                dd_title_multi: '파일을 여기로 드래그하세요'
-              },
-              queue: {
-                title: '업로드 대기열',
-                title_uploading_with_counter: '업로드 중',
-                title_processing_with_counter: '처리 중'
-              }
-            }
-          }
-        },
-        (error, result) => {
-          if (error) {
-            console.error(error);
-            showToast('업로드에 실패했습니다. 다시 시도해 주세요');
-            return;
-          }
+  function initSnapUpload(c) {
+    const uploadLink = $('#snap-upload-link');
+    const overlay = $('#snap-upload-overlay');
+    const closeBtn = $('#snap-upload-close');
+    const form = $('#snap-upload-form');
+    const pickerBtn = $('#snap-upload-picker');
+    const fileInput = $('#snap-upload-input');
+    const summary = $('#snap-upload-summary');
+    const preview = $('#snap-upload-preview');
+    const submitBtn = $('#snap-upload-submit');
+    const noticeTitle = $('#snap-upload-notice-title');
+    const noticeList = $('#snap-upload-notice-list');
+    const uploaderNameInput = $('#snap-uploader-name');
+    const uploaderNoteInput = $('#snap-uploader-note');
+    const availability = $('.snap-availability');
 
-          if (!result) return;
+    if (!uploadLink || !overlay || !closeBtn || !form || !pickerBtn || !fileInput || !summary || !preview || !submitBtn || !noticeTitle || !noticeList || !uploaderNameInput || !uploaderNoteInput || !availability) {
+      return;
+    }
 
-          if (result.event === 'success') {
-            uploadedCount += 1;
-          }
+    const uploadConfig = c.snap?.upload || {};
+    const availableAt = c.snap?.uploadAvailableAt ? new Date(c.snap.uploadAvailableAt) : null;
+    const closeAt = c.snap?.uploadCloseAt ? new Date(c.snap.uploadCloseAt) : null;
 
-          if (result.event === 'queues-end' && uploadedCount > 0) {
-            showToast(uploadedCount === 1 ? '사진이 업로드되었습니다' : `${uploadedCount}개 파일이 업로드되었습니다`);
-            uploadedCount = 0;
-          }
+    function getUploadState() {
+      const now = Date.now();
+      const hasStarted = !availableAt || now >= availableAt.getTime();
+      const hasClosed = !!closeAt && now > closeAt.getTime();
+      const isAvailable = hasStarted && !hasClosed;
+
+      return {
+        hasStarted,
+        hasClosed,
+        isAvailable
+      };
+    }
+
+    const defaultNoticeLines = [
+      `한 번에 최대 ${uploadConfig.maxFiles || 20}장까지 업로드하실 수 있어요.`,
+      '사진 파일만 업로드 가능합니다.',
+      c.snap?.availabilityText || '예식 당일부터 업로드 가능합니다.',
+      '업로드한 파일은 신랑신부 전용 저장소에 보관됩니다.'
+    ];
+
+    noticeTitle.textContent = c.snap?.noticeTitle || '업로드 안내';
+    noticeList.innerHTML = (c.snap?.noticeLines?.length ? c.snap.noticeLines : defaultNoticeLines)
+      .map(line => `<li>${escapeHtml(line)}</li>`)
+      .join('');
+
+    function updateSnapAvailabilityUI() {
+      const { hasClosed, isAvailable } = getUploadState();
+
+      if (hasClosed) {
+        availability.textContent = '사진 업로드 기간이 종료되었습니다';
+      } else if (isAvailable) {
+        availability.textContent = '지금 사진 업로드가 가능합니다';
+      } else {
+        availability.textContent = c.snap?.availabilityText || '예식 당일부터 업로드 가능합니다';
+      }
+
+      uploadLink.classList.toggle('is-disabled', !isAvailable);
+    }
+
+    function openSnapUpload() {
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.documentElement.classList.add('snap-upload-open');
+      document.body.classList.add('snap-upload-open');
+    }
+
+    function closeSnapUpload() {
+      if (overlay.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.documentElement.classList.remove('snap-upload-open');
+      document.body.classList.remove('snap-upload-open');
+    }
+
+    function resetSnapUploadForm() {
+      snapPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+      snapPreviewUrls = [];
+      snapSelectedFiles = [];
+      form.reset();
+      renderSnapUploadPreview();
+    }
+
+    function isAllowedSnapFile(file) {
+      const allowedMimeTypes = uploadConfig.allowedMimeTypes || [];
+      if (allowedMimeTypes.length === 0) {
+        return file.type.startsWith('image/');
+      }
+      return allowedMimeTypes.includes(file.type) || file.type.startsWith('image/');
+    }
+
+    function mergeSnapFiles(incomingFiles) {
+      const maxFiles = uploadConfig.maxFiles || 20;
+      const maxFileSize = uploadConfig.maxFileSize || 10485760;
+      const nextFiles = [...snapSelectedFiles];
+      let invalidTypeCount = 0;
+      let oversizedCount = 0;
+      let limitReached = false;
+
+      incomingFiles.forEach(file => {
+        if (nextFiles.length >= maxFiles) {
+          limitReached = true;
+          return;
         }
-      );
-
-      uploadLink.href = '#';
-      uploadLink.classList.remove('is-disabled');
-      uploadLink.addEventListener('click', (event) => {
-        event.preventDefault();
-        widget.open();
+        if (!isAllowedSnapFile(file)) {
+          invalidTypeCount += 1;
+          return;
+        }
+        if (file.size > maxFileSize) {
+          oversizedCount += 1;
+          return;
+        }
+        nextFiles.push(file);
       });
-      return;
+
+      snapSelectedFiles = nextFiles;
+
+      const messages = [];
+      if (invalidTypeCount) messages.push(`${invalidTypeCount}개 파일은 형식이 맞지 않아 제외되었어요`);
+      if (oversizedCount) messages.push(`${oversizedCount}개 파일은 용량이 커서 제외되었어요`);
+      if (limitReached) messages.push(`최대 ${maxFiles}장까지만 선택할 수 있어요`);
+      if (messages.length) {
+        showToast(messages.join(' / '));
+      }
     }
 
-    if (href && isAvailable) {
-      uploadLink.href = href;
-      uploadLink.classList.remove('is-disabled');
-      return;
+    function renderSnapUploadPreview() {
+      snapPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+      snapPreviewUrls = [];
+      preview.innerHTML = '';
+
+      if (snapSelectedFiles.length === 0) {
+        summary.textContent = '선택된 사진이 없습니다.';
+        return;
+      }
+
+      const totalSize = snapSelectedFiles.reduce((sum, file) => sum + file.size, 0);
+      summary.textContent = `${snapSelectedFiles.length}장 선택됨 · 총 ${formatBytes(totalSize)}`;
+
+      snapSelectedFiles.forEach((file, index) => {
+        const objectUrl = URL.createObjectURL(file);
+        snapPreviewUrls.push(objectUrl);
+
+        const item = document.createElement('div');
+        item.className = 'snap-upload-preview-item';
+
+        item.innerHTML = `
+          <img src="${objectUrl}" alt="${escapeHtml(file.name)}">
+          <button type="button" class="snap-upload-preview-remove" data-index="${index}" aria-label="선택한 사진 삭제">×</button>
+        `;
+
+        preview.appendChild(item);
+      });
+
+      $$('.snap-upload-preview-remove', preview).forEach(button => {
+        button.addEventListener('click', () => {
+          const index = Number(button.dataset.index);
+          snapSelectedFiles.splice(index, 1);
+          renderSnapUploadPreview();
+        });
+      });
     }
 
-    uploadLink.href = '#';
-    uploadLink.classList.add('is-disabled');
+    async function uploadSnapFiles(uploaderName, uploaderNote) {
+      const provider = uploadConfig.provider || 'supabase';
+      const supabaseUrl = (uploadConfig.supabaseUrl || '').replace(/\/+$/, '');
+      const anonKey = uploadConfig.anonKey || '';
+      const bucket = uploadConfig.bucket || '';
+      const metadataTable = uploadConfig.metadataTable || 'snap_messages';
+
+      if (provider !== 'supabase' || !supabaseUrl || !anonKey || !bucket) {
+        throw new Error('Snap upload config missing');
+      }
+
+      const folderRoot = (uploadConfig.folder || 'wedding-snap')
+        .split('/')
+        .filter(Boolean)
+        .map(sanitizePathSegment)
+        .join('/');
+      const dateSegment = new Date().toISOString().slice(0, 10);
+      const uploaderSegment = sanitizePathSegment(uploaderName);
+      const uploadedPaths = [];
+      const uploadGroupId = window.crypto?.randomUUID?.() || `snap-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      for (const [index, file] of snapSelectedFiles.entries()) {
+        const extension = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const fileSegment = sanitizePathSegment(file.name);
+        const objectPath = [
+          folderRoot,
+          dateSegment,
+          `${uploaderSegment}-${Date.now()}-${index + 1}-${fileSegment}.${extension}`
+        ].filter(Boolean).join('/');
+
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/${encodeURIComponent(bucket)}/${objectPath
+          .split('/')
+          .map(segment => encodeURIComponent(segment))
+          .join('/')}`;
+
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+            'x-upsert': 'false',
+            'Content-Type': file.type || 'application/octet-stream'
+          },
+          body: file
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Snap upload failed', {
+            status: response.status,
+            bucket,
+            objectPath,
+            errorText
+          });
+          throw new Error(errorText || `Upload failed: ${response.status}`);
+        }
+
+        uploadedPaths.push(objectPath);
+      }
+
+      const metadataResponse = await fetch(`${supabaseUrl}/rest/v1/${metadataTable}`, {
+        method: 'POST',
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+          upload_group_id: uploadGroupId,
+          name: uploaderName,
+          note: uploaderNote || null,
+          file_count: uploadedPaths.length,
+          file_paths: uploadedPaths,
+          storage_bucket: bucket,
+          source: 'mobile-wedding-snap',
+          venue: c.wedding.venue || '',
+          wedding_date: c.wedding.date || ''
+        })
+      });
+
+      if (!metadataResponse.ok) {
+        const errorText = await metadataResponse.text();
+        console.error('Snap metadata save failed', {
+          status: metadataResponse.status,
+          metadataTable,
+          errorText
+        });
+        throw new Error(errorText || `Metadata insert failed: ${metadataResponse.status}`);
+      }
+    }
+
     uploadLink.addEventListener('click', (event) => {
       event.preventDefault();
-      const message = hasClosed
-        ? '업로드 기간이 종료되었습니다'
-        : isAvailable
-          ? '사진 업로드 링크를 준비 중입니다'
-          : '예식 당일부터 업로드 가능합니다';
-      showToast(message);
+      const { hasClosed, isAvailable } = getUploadState();
+
+      if (hasClosed) {
+        showToast('업로드 기간이 종료되었습니다');
+        return;
+      }
+
+      if (!isAvailable) {
+        showToast('예식 당일부터 업로드 가능합니다');
+        return;
+      }
+
+      openSnapUpload();
     });
+
+    pickerBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+      mergeSnapFiles(Array.from(fileInput.files || []));
+      fileInput.value = '';
+      renderSnapUploadPreview();
+    });
+
+    closeBtn.addEventListener('click', closeSnapUpload);
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        closeSnapUpload();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && overlay.classList.contains('active')) {
+        closeSnapUpload();
+      }
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      if (!form.reportValidity()) return;
+
+      if (snapSelectedFiles.length === 0) {
+        showToast('업로드할 사진을 먼저 선택해 주세요');
+        return;
+      }
+
+      const uploaderName = uploaderNameInput.value.trim();
+      if (!uploaderName) {
+        showToast('성함을 입력해 주세요');
+        uploaderNameInput.focus();
+        return;
+      }
+
+      const uploaderNote = uploaderNoteInput.value.trim();
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '업로드 중...';
+
+      try {
+        await uploadSnapFiles(uploaderName, uploaderNote);
+        showToast(`${snapSelectedFiles.length}장 업로드되었습니다`);
+        resetSnapUploadForm();
+        closeSnapUpload();
+      } catch (error) {
+        console.error(error);
+        showToast(getSnapUploadErrorMessage(error));
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '업로드';
+      }
+    });
+
+    updateSnapAvailabilityUI();
+    window.setInterval(updateSnapAvailabilityUI, 60000);
+    renderSnapUploadPreview();
   }
 
   // ── Account ──

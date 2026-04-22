@@ -75,6 +75,13 @@ body.prompt-open {
   touch-action: none;
 }
 
+html.snap-upload-open,
+body.snap-upload-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
 img {
   display: block;
   max-width: 100%;
@@ -1799,6 +1806,213 @@ a {
   white-space: pre-line;
 }
 
+/* ── Snap Upload Modal ── */
+.snap-upload-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 16, 14, 0.36);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.32s ease;
+  z-index: 2300;
+}
+
+.snap-upload-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.snap-upload-sheet {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: min(var(--app-safe-width), var(--app-frame-width));
+  height: 100vh;
+  height: 100lvh;
+  transform: translate(-50%, 24px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  opacity: 0;
+  transition: transform 0.34s ease, opacity 0.34s ease;
+}
+
+.snap-upload-overlay.active .snap-upload-sheet {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.snap-upload-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 0 20px;
+  border-bottom: 1px solid #f0ebe5;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+}
+
+.snap-upload-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2d2a27;
+}
+
+.snap-upload-close {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #7b746d;
+}
+
+.snap-upload-form {
+  overflow-y: auto;
+  padding: 20px 20px calc(28px + env(safe-area-inset-bottom));
+}
+
+.snap-upload-textarea {
+  min-height: 120px;
+}
+
+.snap-upload-notice {
+  margin-bottom: 18px;
+  padding: 18px 18px 16px;
+  border: 1px solid #ebe4dc;
+  border-radius: 12px;
+  background: #fcfaf7;
+}
+
+.snap-upload-notice-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #35312d;
+}
+
+.snap-upload-notice-list {
+  list-style: none;
+  margin-top: 10px;
+  display: grid;
+  gap: 7px;
+}
+
+.snap-upload-notice-list li {
+  position: relative;
+  padding-left: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #6d6761;
+}
+
+.snap-upload-notice-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #b6a898;
+}
+
+.snap-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.snap-upload-picker {
+  width: 100%;
+  min-height: 180px;
+  border: 1px solid #e9e2db;
+  border-radius: 12px;
+  background: #fff;
+  color: #736b64;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.snap-upload-picker:hover {
+  border-color: #d7cdc2;
+  background: #fdfbf9;
+}
+
+.snap-upload-picker-plus {
+  font-size: 42px;
+  font-weight: 200;
+  line-height: 1;
+  color: #5f5751;
+}
+
+.snap-upload-picker-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6e6761;
+}
+
+.snap-upload-summary {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #8a837d;
+}
+
+.snap-upload-preview {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.snap-upload-preview:empty {
+  display: none;
+}
+
+.snap-upload-preview-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: #efe9e2;
+}
+
+.snap-upload-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.snap-upload-preview-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(25, 23, 21, 0.62);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.snap-upload-submit {
+  margin-top: 24px;
+}
+
 /* ── RSVP Sheet ── */
 .rsvp-sheet-overlay {
   position: fixed;
@@ -1884,6 +2098,10 @@ a {
   .attendance-prompt {
     width: 100%;
     max-width: 340px;
+  }
+
+  .snap-upload-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
