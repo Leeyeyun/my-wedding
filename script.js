@@ -125,6 +125,44 @@
   let attendancePromptArmed = false;
   let snapSelectedFiles = [];
   let snapPreviewUrls = [];
+  let bodyScrollLockY = 0;
+  const bodyScrollLocks = new Set();
+
+  function lockBodyScroll(reason) {
+    if (!reason) return;
+
+    if (bodyScrollLocks.size === 0) {
+      bodyScrollLockY = window.scrollY || window.pageYOffset || 0;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${bodyScrollLockY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    }
+
+    bodyScrollLocks.add(reason);
+  }
+
+  function unlockBodyScroll(reason) {
+    if (reason) {
+      bodyScrollLocks.delete(reason);
+    } else {
+      bodyScrollLocks.clear();
+    }
+
+    if (bodyScrollLocks.size > 0) {
+      return;
+    }
+
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, bodyScrollLockY);
+  }
 
   function shouldShowAttendancePrompt() {
     return !attendancePromptShown;
@@ -204,6 +242,7 @@
 
     document.documentElement.classList.remove('intro-active', 'sheet-open', 'prompt-open');
     document.body.classList.remove('intro-active', 'sheet-open', 'prompt-open');
+    unlockBodyScroll();
     $('#attendance-prompt-overlay')?.classList.remove('active');
     $('#attendance-prompt-overlay')?.setAttribute('aria-hidden', 'true');
     $('#rsvp-sheet-overlay')?.classList.remove('active');
@@ -923,6 +962,7 @@
     }
 
     function openSheet() {
+      lockBodyScroll('sheet');
       closeAttendancePrompt();
       overlay.classList.add('active');
       overlay.setAttribute('aria-hidden', 'false');
@@ -938,6 +978,7 @@
       overlay.setAttribute('aria-hidden', 'true');
       document.documentElement.classList.remove('sheet-open');
       document.body.classList.remove('sheet-open');
+      unlockBodyScroll('sheet');
     }
 
     function handlePromptDismiss() {
@@ -1032,6 +1073,7 @@
     promptOverlay.setAttribute('aria-hidden', 'false');
     document.documentElement.classList.add('prompt-open');
     document.body.classList.add('prompt-open');
+    lockBodyScroll('prompt');
   }
 
   function closeAttendancePrompt() {
@@ -1044,6 +1086,7 @@
     promptOverlay.setAttribute('aria-hidden', 'true');
     document.documentElement.classList.remove('prompt-open');
     document.body.classList.remove('prompt-open');
+    unlockBodyScroll('prompt');
   }
 
   // ── Snap Upload ──
@@ -1143,6 +1186,7 @@
       overlay.setAttribute('aria-hidden', 'false');
       document.documentElement.classList.add('snap-upload-open');
       document.body.classList.add('snap-upload-open');
+      lockBodyScroll('snap-upload');
     }
 
     function closeSnapUpload() {
@@ -1153,6 +1197,7 @@
       overlay.setAttribute('aria-hidden', 'true');
       document.documentElement.classList.remove('snap-upload-open');
       document.body.classList.remove('snap-upload-open');
+      unlockBodyScroll('snap-upload');
     }
 
     function resetSnapUploadForm() {
