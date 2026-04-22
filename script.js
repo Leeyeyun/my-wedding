@@ -127,6 +127,17 @@
   let snapPreviewUrls = [];
   let bodyScrollLockY = 0;
   const bodyScrollLocks = new Set();
+  let mobileScrollGuardAttached = false;
+
+  function shouldAllowLockedTouchScroll(target) {
+    return !!target.closest('.rsvp-form, .snap-upload-form');
+  }
+
+  function handleLockedTouchMove(event) {
+    if (bodyScrollLocks.size === 0) return;
+    if (shouldAllowLockedTouchScroll(event.target)) return;
+    event.preventDefault();
+  }
 
   function lockBodyScroll(reason) {
     if (!reason) return;
@@ -139,6 +150,11 @@
       document.body.style.right = '0';
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
+
+      if (!mobileScrollGuardAttached) {
+        document.addEventListener('touchmove', handleLockedTouchMove, { passive: false });
+        mobileScrollGuardAttached = true;
+      }
     }
 
     bodyScrollLocks.add(reason);
@@ -161,7 +177,18 @@
     document.body.style.right = '';
     document.body.style.width = '';
     document.body.style.overflow = '';
-    window.scrollTo(0, bodyScrollLockY);
+
+    if (mobileScrollGuardAttached) {
+      document.removeEventListener('touchmove', handleLockedTouchMove, { passive: false });
+      mobileScrollGuardAttached = false;
+    }
+
+    const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo({ top: bodyScrollLockY, left: 0, behavior: 'auto' });
+    window.requestAnimationFrame(() => {
+      document.documentElement.style.scrollBehavior = previousScrollBehavior;
+    });
   }
 
   function shouldShowAttendancePrompt() {
