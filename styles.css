@@ -1604,6 +1604,14 @@ a {
   font-size: 14px;
   line-height: 1.5;
   color: #5e5750;
+  white-space: pre-line;
+  word-break: keep-all;
+}
+
+.attendance-prompt-meta-line-secondary {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #948c84;
 }
 
 .attendance-prompt-button {

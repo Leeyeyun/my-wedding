@@ -123,8 +123,14 @@
 
   let attendancePromptShown = false;
   let attendancePromptArmed = false;
+  let attendancePromptMode = 'rsvp';
+  let attendancePromptDefaultContent = null;
+  let attendancePromptSnapContent = null;
   let snapSelectedFiles = [];
   let snapPreviewUrls = [];
+  let snapUploadPromptShown = false;
+  let openSnapUploadModal = null;
+  let isSnapUploadAvailable = () => false;
   let bodyScrollLockY = 0;
   const bodyScrollLocks = new Set();
   let mobileScrollGuardAttached = false;
@@ -926,14 +932,50 @@
   }
 
   // ── Attendance / RSVP ──
-  function buildAttendance(c) {
-    const title = $('.attendance-title');
-    const message = $('.attendance-message');
-    const link = $('#attendance-link');
+  function setAttendancePromptContent(content) {
+    if (!content) return;
+
+    const promptTitle = $('#attendance-prompt-title');
     const promptMessage = $('#attendance-prompt-message');
     const promptCouple = $('#attendance-prompt-couple');
     const promptDatetime = $('#attendance-prompt-datetime');
     const promptVenue = $('#attendance-prompt-venue');
+    const promptOpenButton = $('#attendance-prompt-open');
+
+    if (promptTitle) promptTitle.textContent = content.title || '';
+    if (promptMessage) promptMessage.textContent = content.message || '';
+    if (promptCouple) promptCouple.textContent = content.couple || '';
+    if (promptDatetime) promptDatetime.textContent = content.datetime || '';
+    if (promptVenue) {
+      promptVenue.textContent = content.venue || '';
+      promptVenue.classList.toggle('attendance-prompt-meta-line-secondary', !!content.venueSecondary);
+    }
+    if (promptOpenButton) promptOpenButton.textContent = content.buttonLabel || '';
+  }
+
+  function setAttendancePromptMode(mode) {
+    attendancePromptMode = mode === 'snap' ? 'snap' : 'rsvp';
+    const nextContent = attendancePromptMode === 'snap'
+      ? attendancePromptSnapContent
+      : attendancePromptDefaultContent;
+    setAttendancePromptContent(nextContent);
+  }
+
+  function buildAttendance(c) {
+    const title = $('.attendance-title');
+    const message = $('.attendance-message');
+    const link = $('#attendance-link');
+    const dateInfo = formatDate(c.wedding.date);
+    const dateText = `${dateInfo.year}년 ${dateInfo.month}월 ${dateInfo.day}일 ${dateInfo.dayName}요일 ${formatCeremonyTime(c.wedding.time)}`;
+    const venueText = c.wedding.hall
+      ? `${c.wedding.venue} ${c.wedding.hall}`
+      : c.wedding.venue;
+    const snapCloseDate = c.snap?.uploadCloseAt ? formatDate(c.snap.uploadCloseAt) : null;
+    const snapCloseText = snapCloseDate
+      ? `${snapCloseDate.month}월 ${snapCloseDate.day}일까지 업로드 가능합니다`
+      : '예식 후 5일 동안 업로드 가능합니다';
+    const buttonLabel = c.attendance?.buttonLabel || '참석 여부 전달';
+    const snapButtonLabel = c.snap?.buttonLabel || '사진 업로드';
 
     if (title) {
       title.textContent = c.attendance?.title || '참석 여부 전달';
@@ -941,30 +983,31 @@
     if (message) {
       message.textContent = c.attendance?.message || '';
     }
-    if (promptMessage) {
-      promptMessage.textContent = c.attendance?.message || '';
-    }
-    if (promptCouple) {
-      promptCouple.textContent = `${c.groom.name} ♥ ${c.bride.name}`;
-    }
-    if (promptDatetime) {
-      const dateInfo = formatDate(c.wedding.date);
-      promptDatetime.textContent = `${dateInfo.year}년 ${dateInfo.month}월 ${dateInfo.day}일 ${dateInfo.dayName}요일 ${formatCeremonyTime(c.wedding.time)}`;
-    }
-    if (promptVenue) {
-      promptVenue.textContent = c.wedding.hall
-        ? `${c.wedding.venue} ${c.wedding.hall}`
-        : c.wedding.venue;
-    }
+
+    attendancePromptDefaultContent = {
+      title: c.attendance?.title || '참석 여부 전달',
+      message: c.attendance?.message || '',
+      couple: `${c.groom.name} ♥ ${c.bride.name}`,
+      datetime: dateText,
+      venue: venueText,
+      buttonLabel
+    };
+
+    attendancePromptSnapContent = {
+      title: snapButtonLabel,
+      message: c.snap?.description || '신랑신부의 행복한 순간을 담아주세요.',
+      couple: '예식 당일부터 5일 동안 업로드 가능합니다.',
+      datetime: '카카오톡으로 보내주셔도 됩니다:)',
+      venue: '',
+      venueSecondary: false,
+      buttonLabel: snapButtonLabel
+    };
+
+    setAttendancePromptMode('rsvp');
+
     if (!link) return;
-    const buttonLabel = c.attendance?.buttonLabel || '참석 여부 전달';
     link.textContent = buttonLabel;
     link.classList.remove('is-placeholder');
-
-    const promptOpenButton = $('#attendance-prompt-open');
-    if (promptOpenButton) {
-      promptOpenButton.textContent = buttonLabel;
-    }
   }
 
   function initRsvpModal(c) {
@@ -1015,6 +1058,11 @@
     openBtn.addEventListener('click', openSheet);
     closeBtn.addEventListener('click', closeSheet);
     promptOpenBtn?.addEventListener('click', () => {
+      if (attendancePromptMode === 'snap' && openSnapUploadModal) {
+        closeAttendancePrompt();
+        openSnapUploadModal();
+        return;
+      }
       openSheet();
     });
     promptCloseBtn?.addEventListener('click', handlePromptDismiss);
@@ -1182,6 +1230,8 @@
       };
     }
 
+    isSnapUploadAvailable = () => getUploadState().isAvailable;
+
     const defaultNoticeLines = [
       `한 번에 최대 ${uploadConfig.maxFiles || 20}장까지 업로드하실 수 있어요.`,
       '사진 파일만 업로드 가능합니다.',
@@ -1215,6 +1265,8 @@
       document.body.classList.add('snap-upload-open');
       lockBodyScroll('snap-upload');
     }
+
+    openSnapUploadModal = openSnapUpload;
 
     function closeSnapUpload() {
       if (overlay.contains(document.activeElement)) {
@@ -1625,7 +1677,14 @@
               if (entry.intersectionRatio >= 0.5 && attendancePromptArmed) {
                 window.setTimeout(() => {
                   if (shouldShowAttendancePrompt()) {
-                    openAttendancePrompt();
+                    if (isSnapUploadAvailable() && openSnapUploadModal && !snapUploadPromptShown) {
+                      snapUploadPromptShown = true;
+                      setAttendancePromptMode('snap');
+                      openAttendancePrompt();
+                    } else {
+                      setAttendancePromptMode('rsvp');
+                      openAttendancePrompt();
+                    }
                   }
                 }, 180);
                 attendancePromptObserver.disconnect();
@@ -1689,6 +1748,7 @@
     $$('.fade-in').forEach(el => el.classList.remove('visible'));
     $('.poster-section')?.classList.remove('poster-active');
     $('.snap-section')?.classList.remove('snap-card-visible');
+    snapUploadPromptShown = false;
   }
 
   function reobserveAnimations() {
