@@ -12,15 +12,89 @@
   // ── Helpers ──
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+  const KST_TIME_ZONE = 'Asia/Seoul';
+  const KST_OFFSET_HOURS = 9;
+  const DAY_MS = 1000 * 60 * 60 * 24;
+
+  function parseDateParts(dateStr) {
+    const [year, month, day] = String(dateStr || '')
+      .split('T')[0]
+      .split('-')
+      .map(Number);
+
+    return { year, month, day };
+  }
+
+  function parseTimeParts(timeStr) {
+    const [hour = 0, minute = 0, second = 0] = String(timeStr || '00:00:00')
+      .split(':')
+      .map(Number);
+
+    return { hour, minute, second };
+  }
+
+  function getWeekdayIndex(year, month, day) {
+    return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  }
+
+  function getKstNowParts() {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: KST_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23'
+    });
+
+    const parts = Object.fromEntries(
+      formatter
+        .formatToParts(new Date())
+        .filter(part => part.type !== 'literal')
+        .map(part => [part.type, Number(part.value)])
+    );
+
+    return {
+      year: parts.year,
+      month: parts.month,
+      day: parts.day,
+      hour: parts.hour,
+      minute: parts.minute,
+      second: parts.second
+    };
+  }
+
+  function getKstDayNumberFromParts(parts) {
+    return Math.floor(Date.UTC(parts.year, parts.month - 1, parts.day) / DAY_MS);
+  }
+
+  function parseKstDateTime(input) {
+    if (!input) return null;
+
+    const [datePart, timePart = '00:00:00'] = String(input).split('T');
+    const { year, month, day } = parseDateParts(datePart);
+    const { hour, minute, second } = parseTimeParts(timePart);
+
+    return Date.UTC(year, month - 1, day, hour - KST_OFFSET_HOURS, minute, second);
+  }
+
+  function getKstIsoString() {
+    const now = getKstNowParts();
+    return `${String(now.year).padStart(4, '0')}-${String(now.month).padStart(2, '0')}-${String(now.day).padStart(2, '0')}T${String(now.hour).padStart(2, '0')}:${String(now.minute).padStart(2, '0')}:${String(now.second).padStart(2, '0')}+09:00`;
+  }
+
+  function getKstDateStamp() {
+    const now = getKstNowParts();
+    return `${String(now.year).padStart(4, '0')}-${String(now.month).padStart(2, '0')}-${String(now.day).padStart(2, '0')}`;
+  }
 
   function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
+    const { year, month, day } = parseDateParts(dateStr);
     const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-    const dayName = dayNames[d.getDay()];
-    return { year, month, day, dayName, date: d };
+    const dayName = dayNames[getWeekdayIndex(year, month, day)];
+    return { year, month, day, dayName };
   }
 
   function formatTime(timeStr) {
@@ -38,7 +112,7 @@
   }
 
   function getWeddingDateTime(c) {
-    return new Date(`${c.wedding.date}T${c.wedding.time}:00`);
+    return parseKstDateTime(`${c.wedding.date}T${c.wedding.time}:00`);
   }
 
   function toTitleCase(text) {
@@ -555,27 +629,26 @@
 
   function initCalendarCountdown(c) {
     const target = getWeddingDateTime(c);
-    const dayMs = 1000 * 60 * 60 * 24;
     const groomName = getNameWithoutSurname(c.groom.name);
     const brideName = getNameWithoutSurname(c.bride.name);
+    const targetDateInfo = formatDate(c.wedding.date);
+    const targetDayNumber = getKstDayNumberFromParts(targetDateInfo);
 
     function update() {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const targetDate = new Date(target.getFullYear(), target.getMonth(), target.getDate());
-      const diff = targetDate - today;
+      const todayKst = getKstNowParts();
+      const todayDayNumber = getKstDayNumberFromParts(todayKst);
+      const diffDays = targetDayNumber - todayDayNumber;
       const messageEl = $('#calendar-countdown-message');
 
-      if (diff <= 0) {
+      if (diffDays <= 0) {
         if (messageEl) {
           messageEl.innerHTML = `${groomName} <span class="calendar-countdown__message-heart">♥</span> ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight calendar-countdown__message-strong">오늘</span>입니다.`;
         }
         return;
       }
 
-      const days = Math.round(diff / dayMs);
       if (messageEl) {
-        messageEl.innerHTML = `${groomName} <span class="calendar-countdown__message-heart">♥</span> ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight"><strong class="calendar-countdown__message-strong">${days}일</strong></span> 남았습니다.`;
+        messageEl.innerHTML = `${groomName} <span class="calendar-countdown__message-heart">♥</span> ${brideName}의 결혼식이 <span class="calendar-countdown__message-highlight"><strong class="calendar-countdown__message-strong">${diffDays}일</strong></span> 남았습니다.`;
       }
     }
 
@@ -1101,7 +1174,7 @@
 
       const formData = new FormData(form);
       const payload = {
-        timestamp: new Date().toISOString(),
+        timestamp: getKstIsoString(),
         side: formData.get('side') || '',
         attendance: formData.get('attendance') || '',
         meal: formData.get('meal') || '',
@@ -1214,8 +1287,8 @@
     }
 
     const uploadConfig = c.snap?.upload || {};
-    const availableAt = c.snap?.uploadAvailableAt ? new Date(c.snap.uploadAvailableAt) : null;
-    const closeAt = c.snap?.uploadCloseAt ? new Date(c.snap.uploadCloseAt) : null;
+    const availableAt = parseKstDateTime(c.snap?.uploadAvailableAt);
+    const closeAt = parseKstDateTime(c.snap?.uploadCloseAt);
 
     function getUploadState() {
       const now = Date.now();
@@ -1383,7 +1456,7 @@
         .filter(Boolean)
         .map(sanitizePathSegment)
         .join('/');
-      const dateSegment = new Date().toISOString().slice(0, 10);
+      const dateSegment = getKstDateStamp();
       const uploaderSegment = sanitizePathSegment(uploaderName);
       const uploadedPaths = [];
       const uploadGroupId = window.crypto?.randomUUID?.() || `snap-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
