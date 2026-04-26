@@ -205,6 +205,7 @@
   let snapUploadPromptShown = false;
   let openSnapUploadModal = null;
   let isSnapUploadAvailable = () => false;
+  let isSnapUploadClosed = () => false;
   let bodyScrollLockY = 0;
   const bodyScrollLocks = new Set();
   let mobileScrollGuardAttached = false;
@@ -272,7 +273,7 @@
   }
 
   function shouldShowAttendancePrompt() {
-    return !attendancePromptShown;
+    return !attendancePromptShown && !isSnapUploadClosed();
   }
 
   // ── Image Loading ──
@@ -1304,6 +1305,7 @@
     }
 
     isSnapUploadAvailable = () => getUploadState().isAvailable;
+    isSnapUploadClosed = () => getUploadState().hasClosed;
 
     const defaultNoticeLines = [
       `한 번에 최대 ${uploadConfig.maxFiles || 20}장까지 업로드하실 수 있어요.`,
@@ -1322,13 +1324,18 @@
 
       if (hasClosed) {
         availability.textContent = '사진 업로드 기간이 종료되었습니다';
+        uploadLink.textContent = '업로드가 종료되었습니다';
       } else if (isAvailable) {
         availability.textContent = '지금 사진 업로드가 가능합니다';
+        uploadLink.textContent = c.snap?.buttonLabel || '사진 업로드';
       } else {
         availability.textContent = c.snap?.availabilityText || '예식 당일부터 업로드 가능합니다';
+        uploadLink.textContent = c.snap?.buttonLabel || '사진 업로드';
       }
 
       uploadLink.classList.toggle('is-disabled', !isAvailable);
+      uploadLink.disabled = !isAvailable;
+      uploadLink.setAttribute('aria-disabled', String(!isAvailable));
     }
 
     function openSnapUpload() {
