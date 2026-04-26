@@ -1334,8 +1334,8 @@
       }
 
       uploadLink.classList.toggle('is-disabled', !isAvailable);
-      uploadLink.disabled = !isAvailable;
-      uploadLink.setAttribute('aria-disabled', String(!isAvailable));
+      uploadLink.disabled = hasClosed;
+      uploadLink.setAttribute('aria-disabled', String(hasClosed));
     }
 
     function openSnapUpload() {
