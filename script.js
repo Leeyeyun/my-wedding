@@ -1293,8 +1293,8 @@
 
     function getUploadState() {
       const now = Date.now();
-      const hasStarted = !availableAt || now >= availableAt.getTime();
-      const hasClosed = !!closeAt && now > closeAt.getTime();
+      const hasStarted = !availableAt || now >= availableAt;
+      const hasClosed = !!closeAt && now > closeAt;
       const isAvailable = hasStarted && !hasClosed;
 
       return {
